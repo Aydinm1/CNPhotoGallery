@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="img/apple_icons_57x57.png">
+<link rel="apple-touch-icon" sizes="72x72" href="img/apple_icons_72x72.png">
+<link rel="apple-touch-icon" sizes="114x114" href="img/apple_icons_114x114.png">
+<title>Diamond | Html Photography Template</title>
+<link href="https://fonts.googleapis.com/css?family=Roboto:400,700,400italic" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Muli" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="css/theme.css" type="text/css" media="all" />
+<link rel="stylesheet" href="css/responsive.css" type="text/css" media="all" />
+<link rel="stylesheet" href="css/custom.css" type="text/css" media="all" />
+</head>
+<body>	
+    <div class="global_count_wrapper">
+    	<h1 class="count_title">OUR WEBSITE IS COMING SOON!</h1>        					
+        <div class="countdown_wrapper">
+            <div id="countdown"></div>
+        </div>
+		<div class="count_container_wrapper">
+            <div class="count_container">
+                <div class="soc_icons">
+                	<a href="javascript:void(0);" class="count_ico" title="Facebook"><span><i class="icon-facebook-square"></i></span></a>
+                    <a href="javascript:void(0);" class="count_ico" title="Pinterest"><span><i class="icon-pinterest"></i></span></a>
+                    <a href="javascript:void(0);" class="count_ico" title="Twitter"><span><i class="icon-twitter"></i></span></a>
+                    <a href="javascript:void(0);" class="count_ico" title="Instagram"><span><i class="icon-instagram"></i></span></a>
+                    <a href="javascript:void(0);" class="count_ico" title="Tumblr"><span><i class="icon-tumblr-square"></i></span></a>
+                    <a href="javascript:void(0);" class="count_ico" title="Flickr"><span><i class="icon-flickr"></i></span></a>
+                </div>        
+                <div class="form_area">
+                	<h3 class="notify_text">NOTIFY ME WHEN ITS READY</h3>
+                    <div class="notify_shortcode">
+                    	<form action="javascript:void(0);" method="post">
+                        	<p><input type="email" name="your-email" value="" placeholder="Enter Your Email" /><input type="submit" value="Submit" /></p>
+                        </form>
+                    </div>                
+                </div>
+            </div>
+        </div>		        
+    </div>
+    
+    <div class="custom_bg img_bg coming_soon"></div>
+    
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui.min.js"></script>    
+    <script type="text/javascript" src="js/modules.js"></script>
+	<script type="text/javascript" src="js/theme.js"></script>
+    <script type="text/javascript" src="js/jquery.countdown.min.js"></script>
+    <script>
+		jQuery(document).ready(function(){
+			"use strict";
+			centerWindow();
+		});
+		jQuery(window).resize(function(){
+			"use strict";
+			setTimeout('centerWindow()',500);
+			setTimeout('centerWindow()',1000);
+		});
+		function centerWindow() {
+			"use strict";
+			var countWrapper = jQuery('.countdown_wrapper');
+			var countTitle = jQuery('.count_title');
+			var countContainer = jQuery('.count_container_wrapper');
+			var freeSpace = (window_h - countWrapper.height() - countTitle.height() - countContainer.height())/4;
+			var setMiddle = freeSpace*2 + countTitle.height();
+			countTitle.css('top', freeSpace+'px');
+			countWrapper.css('top', setMiddle+'px');
+			countContainer.css('bottom', freeSpace+'px');
+		}
+		jQuery(function () {
+			"use strict";
+			var austDay = new Date();				
+			var austDay = new Date(2015, 11-1, 27);
+			jQuery('#countdown').countdown({until: austDay});
+		});
+	</script>     
+</body>
+</html>
