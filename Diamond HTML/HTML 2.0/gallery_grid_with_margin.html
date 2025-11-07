@@ -237,7 +237,18 @@
     <script type="text/javascript" src="js/modules.js"></script>
 	<script type="text/javascript" src="js/theme.js"></script>
     <script>
-		jQuery(document).ready(function($){
+        const api = process.env.api;
+        const baseid = process.env.baseid;
+        const tableid = process.env.tableid;
+       fetch(`https://api.airtable.com/v0/${baseid}/${tableid}`, {
+  headers: { Authorization: `Bearer ${api}` }
+}) 
+.then(res => {
+                console.log('Airtable HTTP status:', res.status);
+                return res.json();
+            })
+
+        jQuery(document).ready(function($){
 			"use strict";
 			jQuery('.custom_bg').remove();
 			port_setup();
