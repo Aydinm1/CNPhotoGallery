@@ -1,0 +1,25 @@
+# Airtable Configuration (contains sensitive API keys)
+config.js
+api/config.php
+
+# Vercel
+.vercel
+
+# Environment variables (if using local .env)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node modules (if you add dependencies later)
+node_modules/
+
