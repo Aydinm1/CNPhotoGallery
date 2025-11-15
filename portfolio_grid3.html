@@ -302,11 +302,28 @@
             })
             .then(data => {
                 console.log('Airtable data:', data);
+                buildGallery(data);
             })
             .catch(error => {
                 console.error('Airtable fetch error:', error);
             });
         });
+        function buildGallery(data)
+        {
+            var $grid = jQuery('.fs_blog_module');
+            var letter =['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
+            console.log(letter[14]);
+            $grid.empty();
+            if(!data || !data.records || !Array.isArray(data.records))
+        {
+            console.error('no records found in data');
+            return;
+        }
+        for(var i=0; i<data.records.length; i++)
+    {
+        console.log(letter[i]);
+    } 
+        }
         
         jQuery(document).ready(function ($) {
 			"use strict";

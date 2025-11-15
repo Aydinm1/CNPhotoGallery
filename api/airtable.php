@@ -51,8 +51,8 @@ if ($view) {
 // Initialize cURL
 $ch = curl_init($url);
 
-// Set cURL options
-curl_setopt_array($ch, [
+// Prepare cURL options and enable using a local CA bundle if present
+$curlOpts = [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . AIRTABLE_API_KEY,
@@ -60,7 +60,15 @@ curl_setopt_array($ch, [
     ],
     CURLOPT_SSL_VERIFYPEER => true,
     CURLOPT_TIMEOUT => 30
-]);
+];
+
+// If a CA bundle named cacert.pem exists in the api directory, use it.
+$caFile = __DIR__ . '/cacert.pem';
+if (file_exists($caFile)) {
+    $curlOpts[CURLOPT_CAINFO] = $caFile;
+}
+
+curl_setopt_array($ch, $curlOpts);
 
 // Execute request
 $response = curl_exec($ch);
@@ -68,11 +76,20 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
 // Check for cURL errors
 if (curl_errno($ch)) {
-    http_response_code(500);
-    echo json_encode([
+    $curlErr = curl_error($ch);
+    $response = [
         'error' => 'Internal server error',
-        'message' => curl_error($ch)
-    ]);
+        'message' => $curlErr
+    ];
+
+    // Detect common SSL certificate issues and provide actionable guidance
+    if (stripos($curlErr, 'SSL certificate') !== false || stripos($curlErr, 'unable to get local issuer certificate') !== false) {
+        $response['hint'] = 'cURL SSL error: install a CA bundle and set `curl.cainfo` in php.ini, or place a `cacert.pem` file in the api/ directory and set CURLOPT_CAINFO. For local development you can temporarily disable verification (not recommended in production).';
+        $response['fix_example'] = 'Download cacert.pem from https://curl.se/ca/cacert.pem and add `curl.cainfo = "C:\\path\\to\\cacert.pem"` to php.ini';
+    }
+
+    http_response_code(500);
+    echo json_encode($response);
     curl_close($ch);
     exit;
 }
