@@ -321,9 +321,33 @@
         }
         for(var i=0; i<data.records.length; i++)
     {
-        console.log(letter[i]);
+        var record = data.records[i];
+        var attachments = record.fields && record.fields.Photo || [];
+        var att = attachments[0] || {};
+        var imageUrl;
+        if (att.thumbnails && att.thumbnails.large && att.thumbnails.large.url)
+    {
+        imageUrl = att.thumbnails.large.url;
+    
+    }
+    else
+    {
+      imageUrl = att.url;  
+    }
+    var htmlItem = "<div class='blogpost_preview_fw fw-portPreview element nature pr7 pb7'>"+
+            	"<div class='fw-portPreview-wrapper featured_items'>"+
+                    "<div class='img_block wrapped_img'>"+
+                        "<a class='featured_ico_link' href='#'>"+
+                            "<img alt='' width='540' src='"+imageUrl+"' />"+
+                            "<div class='featured_item_fadder'></div>"+
+                        "</a>"+
+                    "</div>"+                    
+                "</div>"+
+            "</div>";
+        var $item = jQuery(htmlItem);
+        $grid.append($item);
     } 
-        }
+        };
         
         jQuery(document).ready(function ($) {
 			"use strict";
