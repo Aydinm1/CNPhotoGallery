@@ -53,7 +53,7 @@
 	</header>
     
     <div class="fullscreen_block hided">
-        <div class="fs_blog_module fw_port_module sorting_block">
+        <div class="fs_blog_module fw_port_module2 sorting_block">
             <div class="blogpost_preview_fw fw-portPreview element fashion">
                 <div class="fw-portPreview-wrapper mas_style1 pr40 pb40">
                     <a href="single_album.html">
@@ -332,9 +332,85 @@
             jQuery('.fw-portPreview-content').each(function(){
                 jQuery(this).css('margin-top', -1*jQuery(this).height()/2+'px');
             });
-        }					
+        }	
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            // Use PHP endpoint (works on FastComet and most shared hosting)
+            const apiUrl = '/api/airtable.php?table=albums';
+            
+            // Fetch data from our secure proxy
+            fetch(apiUrl)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                console.log('Airtable HTTP status:', res.status);
+                return res.json();
+            })
+           .then(data => {
+                console.log('Airtable data:', data);
+                buildAlbums(data);
+            })
+            .catch(error => {
+                console.error('Airtable fetch error:', error);
+            });
+        });
+       
+        function buildAlbums (data)
+        {
+            var $grid = jQuery('.fs_blog_module');
+            $grid.empty();
+
+            if(!data || !data.records || !Array.isArray(data.records))
+        {
+            console.error('no records found in data');
+            return;
+        }
+
+        for(var i=0; i<data.records.length; i++)
+    {
+        var record = data.records[i];
+        if (record.fields.Published !== true)
+    {
+        continue; // Skip unpublished records
+    }
+        var attachments = record.fields && record.fields.Photo || [];
+        var att = attachments[0] || {};
+        var title = record.fields && record.fields.Title || 'Untitled Album';
+        var imageUrl;
+        if (att.thumbnails && att.thumbnails.large && att.thumbnails.large.url)
+    {
+        imageUrl = att.thumbnails.large.url;
+    
+    }
+    else
+    {
+      imageUrl = att.url;  
+    }
+    var htmlItem =
+        '<div class="blogpost_preview_fw fw-portPreview element cities">' +
+            '<div class="fw-portPreview-wrapper mas_style1 pr40 pb40">' +
+                '<a href="single_album.html">' +
+                    '<img src="' +imageUrl+ '" alt="" class="fw_featured_image" width="540">' +
+                    '<div class="fw-portPreview-fadder"></div>' +
+                    '<div class="fw-portPreview-content">' +
+                        '<h2 class="fw-portPreview-title">'+title+'</h2>' +
+                    '</div>' +
+                '</a>' +
+            '</div>' +
+        '</div>';
+        var $item = jQuery(htmlItem);
+        $grid.append($item);
+    } 
+        }
+
+        
+        
+        jQuery(document).ready(function ($) {
+			"use strict";
+			jQuery('.custom_bg').remove();            
+		});
 	</script>
     <script type="text/javascript" src="js/jquery.isotope.min.js"></script>
-    <script type="text/javascript" src="js/sorting.js"></script>
 </body>
 </html>
