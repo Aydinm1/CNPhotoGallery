@@ -355,3 +355,14 @@ h6, h6 span, h6 a,
 	height: 100%;
 	object-fit: cover;
 }
+
+/* Keep album thumbnails square */
+.fw_port_module .fw-portPreview-wrapper.mas_style1 a {
+	aspect-ratio: 1 / 1;
+}
+
+.fw_port_module .fw-portPreview-wrapper.mas_style1 img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
