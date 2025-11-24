@@ -38,9 +38,21 @@ if (!defined('AIRTABLE_API_KEY') || !defined('AIRTABLE_BASE_ID') || !defined('AI
 $offset = isset($_GET['offset']) ? $_GET['offset'] : '';
 $maxRecords = isset($_GET['maxRecords']) ? $_GET['maxRecords'] : '100';
 $view = isset($_GET['view']) ? $_GET['view'] : '';
+$tableSelector = isset($_GET['table']) ? $_GET['table'] : 'photos'; // defaults to current photos table
+
+// Choose table based on selector
+$tableId = AIRTABLE_TABLE_ID;
+if ($tableSelector === 'albums') {
+    if (!defined('AIRTABLE_ALBUMS_TABLE_ID')) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server configuration error: AIRTABLE_ALBUMS_TABLE_ID not set']);
+        exit;
+    }
+    $tableId = AIRTABLE_ALBUMS_TABLE_ID;
+}
 
 // Build Airtable API URL
-$url = "https://api.airtable.com/v0/" . AIRTABLE_BASE_ID . "/" . AIRTABLE_TABLE_ID . "?maxRecords=" . $maxRecords;
+$url = "https://api.airtable.com/v0/" . AIRTABLE_BASE_ID . "/" . $tableId . "?maxRecords=" . $maxRecords;
 if ($offset) {
     $url .= "&offset=" . urlencode($offset);
 }
@@ -102,4 +114,3 @@ http_response_code($httpCode);
 // Return the response
 echo $response;
 ?>
-
