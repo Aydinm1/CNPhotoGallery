@@ -311,8 +311,6 @@
         {
             var $grid = jQuery('.fs_blog_module');
             $grid.empty();
-            var letter =['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
-            console.log(letter[14]);
             
             if(!data || !data.records || !Array.isArray(data.records))
         {
@@ -324,6 +322,10 @@
 
         
         var record = data.records[i];
+        if (record.fields.Published !== true)
+    {
+        continue; // Skip unpublished records
+    }
         var attachments = record.fields && record.fields.Photo || [];
         var att = attachments[0] || {};
         var imageUrl;
