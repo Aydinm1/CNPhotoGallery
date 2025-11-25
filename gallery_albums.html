@@ -387,10 +387,11 @@
     {
       imageUrl = att.url;  
     }
+    var albumID = record.id || '';
     var htmlItem =
         '<div class="blogpost_preview_fw fw-portPreview element cities">' +
             '<div class="fw-portPreview-wrapper mas_style1 pr40 pb40">' +
-                '<a href="single_album.html">' +
+                '<a href="portfolio_grid3.html?album=' + encodeURIComponent(albumID) + '">' +
                     '<img src="' +imageUrl+ '" alt="" class="fw_featured_image" width="540">' +
                     '<div class="fw-portPreview-fadder"></div>' +
                     '<div class="fw-portPreview-content">' +
