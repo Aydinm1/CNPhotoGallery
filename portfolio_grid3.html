@@ -278,7 +278,10 @@
 		</div>
 	</div> 
     <div class="custom_bg img_bg def_bg"></div>
-    
+    <div id="imageModal" class="modalOverlay">
+        <span id="closeModal" class="modalClose">&times;</span>
+        <img id="modalImage" class="modal"/>
+    </div>
     <script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>    
     <script type="text/javascript" src="js/modules.js"></script>
@@ -362,30 +365,50 @@
     }
 
     var linkValue = '#';
-    var type = record.fields.Type;
-    var linkField = record.fields.Link;
+    var type = record.fields.Type || '';
+    var linkField = record.fields.Link || '';
+    var isPhoto = (type && String(type).toLowerCase() === 'photo');
 
-    if (type === 'Link') 
-    {
+    if (String(type).toLowerCase() === 'link') {
         linkValue = linkField;
-        if (!linkValue.startsWith('http://') && !linkValue.startsWith('https://'))
-    {
+        if (linkValue && !linkValue.startsWith('http://') && !linkValue.startsWith('https://')) {
             linkValue = 'http://' + linkValue;
-    }
+        }
     }
 
-    var htmlItem = "<div class='blogpost_preview_fw fw-portPreview element nature pr7 pb7'>"+
-            	"<div class='fw-portPreview-wrapper featured_items'>"+
-                    "<div class='img_block wrapped_img'>"+
-                        "<a class='featured_ico_link' target='_blank' href='"+linkValue+"'>"+
-                            "<img alt='' width='540' src='"+imageUrl+"' />"+
-                            "<div class='featured_item_fadder'></div>"+
-                        "</a>"+
-                    "</div>"+                    
-                "</div>"+
-            "</div>";
-        var $item = jQuery(htmlItem);
-        $grid.append($item);
+    // if item is a photo, we'll open it in the modal instead of navigating
+    if (isPhoto) {
+        linkValue = '#';
+    }
+
+    // Build HTML item; if photo add a data attribute with the image URL for the modal
+    var htmlItem =
+        '<div class="blogpost_preview_fw fw-portPreview element nature pr7 pb7">' +
+            '<div class="fw-portPreview-wrapper featured_items">' +
+                '<div class="img_block wrapped_img">' +
+                    '<a class="featured_ico_link" ' + (isPhoto ? 'href="#" data-modal="photo"' : ('target="_blank" href="' + linkValue + '"')) + '>' +
+                        '<img alt="" width="540" src="' + imageUrl + '" />' +
+                        '<div class="featured_item_fadder"></div>' +
+                    '</a>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
+    var $item = jQuery(htmlItem);
+    $grid.append($item);
+
+    // If this record is a photo, attach click handler to open modal with the full image
+    if (isPhoto) {
+        (function(imgUrl){
+            $item.find('a.featured_ico_link').on('click', function(e){
+                e.preventDefault();
+                var $modal = jQuery('#imageModal');
+                var $modalImg = jQuery('#modalImage');
+                $modalImg.attr('src', imgUrl);
+                $modal.addClass('open');
+            });
+        })(imageUrl);
+    }
     } 
         };
         
@@ -394,6 +417,38 @@
 			jQuery('.custom_bg').remove();            
 		});       				
 	</script>
+    <script>
+        // Modal close handlers (separate script placed after main gallery code)
+        (function(){
+            var $modal = jQuery('#imageModal');
+            var $modalImg = jQuery('#modalImage');
+            var $close = jQuery('#closeModal');
+
+            function closeModal() {
+                $modal.removeClass('open');
+                $modalImg.attr('src', '');
+            }
+
+            $close.on('click', function(e){
+                e.preventDefault();
+                closeModal();
+            });
+
+            // Clicking the overlay (but not the image) closes the modal
+            $modal.on('click', function(e){
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // Esc key closes modal
+            jQuery(document).on('keydown', function(e){
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    if ($modal.hasClass('open')) closeModal();
+                }
+            });
+        })();
+    </script>
     <script type="text/javascript" src="js/jquery.isotope.min.js"></script>
 </body>
 </html>
