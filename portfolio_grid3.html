@@ -278,9 +278,10 @@
 		</div>
 	</div> 
     <div class="custom_bg img_bg def_bg"></div>
-    <div id="imageModal" class="modalOverlay">
+    <div id="mediaModal" class="modalOverlay">
         <span id="closeModal" class="modalClose">&times;</span>
-        <img id="modalImage" class="modal"/>
+        <img id="modalImage" class="modal" style="display:none;"/>
+        <video id="modalVideo" class="modal" style="display:none;" controls autoplay></video>
     </div>
     <script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>    
@@ -351,42 +352,55 @@
         continue; // Skip photos not in the specified album
     }
     }
-        var attachments = record.fields && record.fields.Photo || [];
-        var att = attachments[0] || {};
-        var imageUrl;
-        if (att.thumbnails && att.thumbnails.large && att.thumbnails.large.url)
-    {
-        imageUrl = att.thumbnails.large.url;
-    
-    }
-    else
-    {
-      imageUrl = att.url;  
-    }
-
-    var linkValue = '#';
+        var linkValue = '#';
     var type = record.fields.Type || '';
     var linkField = record.fields.Link || '';
-    var isPhoto = (type && String(type).toLowerCase() === 'photo');
+    var typeStr = String(type).toLowerCase();
+    var isPhoto = (typeStr === 'photo');
+    var isVideo = (typeStr === 'video');
+    var isMediaType = isPhoto || isVideo;
 
-    if (String(type).toLowerCase() === 'link') {
+    // For photos: use Photo field as main content
+    // For videos: use Photo field for thumbnail, Video field for main content
+    var imageUrl = '';
+    var videoUrl = '';
+
+    // Get thumbnail/image from Photo field
+    var photoAttachments = record.fields && record.fields.Photo || [];
+    var photoAtt = photoAttachments[0] || {};
+    if (photoAtt.thumbnails && photoAtt.thumbnails.large && photoAtt.thumbnails.large.url) {
+        imageUrl = photoAtt.thumbnails.large.url;
+    } else if (photoAtt.url) {
+        imageUrl = photoAtt.url;
+    }
+
+    // Get video from Video field if type is video
+    if (isVideo) {
+        var videoAttachments = record.fields && record.fields.Video || [];
+        var videoAtt = videoAttachments[0] || {};
+        if (videoAtt.url) {
+            videoUrl = videoAtt.url;
+        }
+    }
+
+    if (typeStr === 'link') {
         linkValue = linkField;
         if (linkValue && !linkValue.startsWith('http://') && !linkValue.startsWith('https://')) {
             linkValue = 'http://' + linkValue;
         }
     }
 
-    // if item is a photo, we'll open it in the modal instead of navigating
-    if (isPhoto) {
+    // if item is a photo or video, we'll open it in the modal instead of navigating
+    if (isMediaType) {
         linkValue = '#';
     }
 
-    // Build HTML item; if photo add a data attribute with the image URL for the modal
+    // Build HTML item; if media type add a data attribute
     var htmlItem =
         '<div class="blogpost_preview_fw fw-portPreview element nature pr7 pb7">' +
             '<div class="fw-portPreview-wrapper featured_items">' +
                 '<div class="img_block wrapped_img">' +
-                    '<a class="featured_ico_link" ' + (isPhoto ? 'href="#" data-modal="photo"' : ('target="_blank" href="' + linkValue + '"')) + '>' +
+                    '<a class="featured_ico_link" ' + (isMediaType ? ('href="#" data-media-type="' + typeStr + '"') : ('target="_blank" href="' + linkValue + '"')) + '>' +
                         '<img alt="" width="540" src="' + imageUrl + '" />' +
                         '<div class="featured_item_fadder"></div>' +
                     '</a>' +
@@ -397,17 +411,32 @@
     var $item = jQuery(htmlItem);
     $grid.append($item);
 
-    // If this record is a photo, attach click handler to open modal with the full image
-    if (isPhoto) {
-        (function(imgUrl){
+    // If this record is a photo or video, attach click handler to open modal
+    if (isMediaType) {
+        // For videos, use videoUrl as main content; for photos, use imageUrl
+        var mediaContentUrl = isVideo ? videoUrl : imageUrl;
+        
+        (function(mediaUrl, mediaType){
             $item.find('a.featured_ico_link').on('click', function(e){
                 e.preventDefault();
-                var $modal = jQuery('#imageModal');
+                var $modal = jQuery('#mediaModal');
                 var $modalImg = jQuery('#modalImage');
-                $modalImg.attr('src', imgUrl);
+                var $modalVid = jQuery('#modalVideo');
+                
+                // Clear and hide both
+                $modalImg.hide().attr('src', '');
+                $modalVid.hide().attr('src', '');
+                
+                // Show and populate the correct one
+                if (mediaType === 'photo') {
+                    $modalImg.attr('src', mediaUrl).show();
+                } else if (mediaType === 'video') {
+                    $modalVid.attr('src', mediaUrl).show();
+                }
+                
                 $modal.addClass('open');
             });
-        })(imageUrl);
+        })(mediaContentUrl, typeStr);
     }
     } 
         };
@@ -420,13 +449,16 @@
     <script>
         // Modal close handlers (separate script placed after main gallery code)
         (function(){
-            var $modal = jQuery('#imageModal');
+            var $modal = jQuery('#mediaModal');
             var $modalImg = jQuery('#modalImage');
+            var $modalVid = jQuery('#modalVideo');
             var $close = jQuery('#closeModal');
 
             function closeModal() {
                 $modal.removeClass('open');
-                $modalImg.attr('src', '');
+                $modalImg.attr('src', '').hide();
+                $modalVid.attr('src', '').hide();
+                $modalVid.get(0).pause();
             }
 
             $close.on('click', function(e){
@@ -434,7 +466,7 @@
                 closeModal();
             });
 
-            // Clicking the overlay (but not the image) closes the modal
+            // Clicking the overlay (but not the media) closes the modal
             $modal.on('click', function(e){
                 if (e.target === this) {
                     closeModal();
