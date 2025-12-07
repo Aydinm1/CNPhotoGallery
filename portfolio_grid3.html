@@ -280,6 +280,8 @@
     <div class="custom_bg img_bg def_bg"></div>
     <div id="mediaModal" class="modalOverlay">
         <span id="closeModal" class="modalClose">&times;</span>
+        <button id="modalPrev" class="modal-arrow left">&#x2039;</button>
+        <button id="modalNext" class="modal-arrow right">&#x203a;</button>
         <img id="modalImage" class="modal" style="display:none;"/>
         <video id="modalVideo" class="modal" style="display:none;" controls autoplay></video>
     </div>
@@ -305,142 +307,161 @@
                 console.log('Airtable HTTP status:', res.status);
                 return res.json();
             })
-            .then(data => {
-                console.log('Airtable data:', data);
-                buildGallery(data);
-            })
-            .catch(error => {
-                console.error('Airtable fetch error:', error);
-            });
-        });
+    .then(data => {
+        console.log('Airtable data:', data);
+        
         function buildGallery(data)
         {
             var $grid = jQuery('.fs_blog_module');
             $grid.empty();
-            
+
             if(!data || !data.records || !Array.isArray(data.records))
-        {
-            console.error('no records found in data');
-            return;
-        }
-        for(var i=0; i<data.records.length; i++)
-    {
+            {
+                console.error('no records found in data');
+                return;
+            }
 
-        
-        var record = data.records[i];
-        if (record.fields.Published !== true)
-    {
-        continue; // Skip unpublished records
-    }
-        if (albumID)
-    {
-        var photoAlbums = record.fields.Albums || [];
-        var belongsToAlbum = false;
-        if (Array.isArray(photoAlbums))
-    {
-            for (var j = 0; j < photoAlbums.length; j++)
-        {
-            if (photoAlbums[j] === albumID)
-        {
-            belongsToAlbum = true;
-            break;
-        }
-        }
-    }
-        if (!belongsToAlbum)
-    {
-        continue; // Skip photos not in the specified album
-    }
-    }
-        var linkValue = '#';
-    var type = record.fields.Type || '';
-    var linkField = record.fields.Link || '';
-    var typeStr = String(type).toLowerCase();
-    var isPhoto = (typeStr === 'photo');
-    var isVideo = (typeStr === 'video');
-    var isMediaType = isPhoto || isVideo;
+            // Pagination settings
+            var pageSize = 12; // items per page
+            var currentPage = 1;
+            var filtered = [];
 
-    // For photos: use Photo field as main content
-    // For videos: use Photo field for thumbnail, Video field for main content
-    var imageUrl = '';
-    var videoUrl = '';
+            // Build a normalized list of media items to render (preserve order)
+            for(var i=0; i<data.records.length; i++) {
+                var record = data.records[i];
+                if (record.fields.Published !== true) continue;
 
-    // Get thumbnail/image from Photo field
-    var photoAttachments = record.fields && record.fields.Photo || [];
-    var photoAtt = photoAttachments[0] || {};
-    if (photoAtt.thumbnails && photoAtt.thumbnails.large && photoAtt.thumbnails.large.url) {
-        imageUrl = photoAtt.thumbnails.large.url;
-    } else if (photoAtt.url) {
-        imageUrl = photoAtt.url;
-    }
-
-    // Get video from Video field if type is video
-    if (isVideo) {
-        var videoAttachments = record.fields && record.fields.Video || [];
-        var videoAtt = videoAttachments[0] || {};
-        if (videoAtt.url) {
-            videoUrl = videoAtt.url;
-        }
-    }
-
-    if (typeStr === 'link') {
-        linkValue = linkField;
-        if (linkValue && !linkValue.startsWith('http://') && !linkValue.startsWith('https://')) {
-            linkValue = 'http://' + linkValue;
-        }
-    }
-
-    // if item is a photo or video, we'll open it in the modal instead of navigating
-    if (isMediaType) {
-        linkValue = '#';
-    }
-
-    // Build HTML item; if media type add a data attribute
-    var htmlItem =
-        '<div class="blogpost_preview_fw fw-portPreview element nature pr7 pb7">' +
-            '<div class="fw-portPreview-wrapper featured_items">' +
-                '<div class="img_block wrapped_img">' +
-                    '<a class="featured_ico_link" ' + (isMediaType ? ('href="#" data-media-type="' + typeStr + '"') : ('target="_blank" href="' + linkValue + '"')) + '>' +
-                        '<img alt="" width="540" src="' + imageUrl + '" />' +
-                        '<div class="featured_item_fadder"></div>' +
-                    '</a>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-
-    var $item = jQuery(htmlItem);
-    $grid.append($item);
-
-    // If this record is a photo or video, attach click handler to open modal
-    if (isMediaType) {
-        // For videos, use videoUrl as main content; for photos, use imageUrl
-        var mediaContentUrl = isVideo ? videoUrl : imageUrl;
-        
-        (function(mediaUrl, mediaType){
-            $item.find('a.featured_ico_link').on('click', function(e){
-                e.preventDefault();
-                var $modal = jQuery('#mediaModal');
-                var $modalImg = jQuery('#modalImage');
-                var $modalVid = jQuery('#modalVideo');
-                
-                // Clear and hide both
-                $modalImg.hide().attr('src', '');
-                $modalVid.hide().attr('src', '');
-                
-                // Show and populate the correct one
-                if (mediaType === 'photo') {
-                    $modalImg.attr('src', mediaUrl).show();
-                } else if (mediaType === 'video') {
-                    $modalVid.attr('src', mediaUrl).show();
+                if (albumID) {
+                    var photoAlbums = record.fields.Albums || [];
+                    var belongsToAlbum = false;
+                    if (Array.isArray(photoAlbums)) {
+                        for (var j = 0; j < photoAlbums.length; j++) {
+                            if (photoAlbums[j] === albumID) { belongsToAlbum = true; break; }
+                        }
+                    }
+                    if (!belongsToAlbum) continue;
                 }
-                
-                $modal.addClass('open');
-            });
-        })(mediaContentUrl, typeStr);
-    }
-    } 
-        };
+
+                var type = record.fields.Type || '';
+                var typeStr = String(type).toLowerCase();
+                var isPhoto = (typeStr === 'photo');
+                var isVideo = (typeStr === 'video');
+                var isMediaType = isPhoto || isVideo;
+
+                // Thumbnail always from Photo field when available
+                var imageUrl = '';
+                var photoAttachments = record.fields && record.fields.Photo || [];
+                var photoAtt = photoAttachments[0] || {};
+                if (photoAtt.thumbnails && photoAtt.thumbnails.large && photoAtt.thumbnails.large.url) {
+                    imageUrl = photoAtt.thumbnails.large.url;
+                } else if (photoAtt.url) {
+                    imageUrl = photoAtt.url;
+                }
+
+                // Video URL from Video field when type=video
+                var videoUrl = '';
+                if (isVideo) {
+                    var videoAttachments = record.fields && record.fields.Video || [];
+                    var videoAtt = videoAttachments[0] || {};
+                    if (videoAtt.url) videoUrl = videoAtt.url;
+                }
+
+                // Link handling
+                var linkValue = '#';
+                if (String(typeStr) === 'link') {
+                    linkValue = record.fields.Link || '#';
+                    if (linkValue && !linkValue.startsWith('http://') && !linkValue.startsWith('https://')) {
+                        linkValue = 'http://' + linkValue;
+                    }
+                }
+
+                // Push normalized item
+                filtered.push({
+                    record: record,
+                    imageUrl: imageUrl,
+                    videoUrl: videoUrl,
+                    type: typeStr,
+                    link: (isMediaType ? '#' : linkValue)
+                });
+            }
+
+            var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+
+            // Expose the normalized list for modal navigation
+            window.galleryItems = filtered;
+            window.currentGalleryIndex = 0;
+
+            // Page-level arrows removed — navigation is available inside modal preview now.
+
+            function renderPage(page) {
+                currentPage = Math.max(1, Math.min(totalPages, page));
+                $grid.empty();
+
+                var start = (currentPage - 1) * pageSize;
+                var end = Math.min(filtered.length, start + pageSize);
+
+                for (var k = start; k < end; k++) {
+                    var item = filtered[k];
+                    var htmlItem =
+                        '<div class="blogpost_preview_fw fw-portPreview element nature pr7 pb7">' +
+                            '<div class="fw-portPreview-wrapper featured_items">' +
+                                '<div class="img_block wrapped_img">' +
+                                    (item.type === 'photo' || item.type === 'video' ? ('<a class="featured_ico_link" href="#" data-media-type="' + item.type + '" data-index="' + k + '">') : ('<a class="featured_ico_link" target="_blank" href="' + item.link + '" data-index="' + k + '">')) +
+                                        '<img alt="" width="540" src="' + item.imageUrl + '" />' +
+                                        '<div class="featured_item_fadder"></div>' +
+                                    '</a>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+
+                    var $item = jQuery(htmlItem);
+                    $grid.append($item);
+
+                    // Attach handlers for media items
+                    if (item.type === 'photo' || item.type === 'video') {
+                        $item.find('a.featured_ico_link').on('click', function(e){
+                            e.preventDefault();
+                            var idx = parseInt(jQuery(this).attr('data-index'), 10);
+                            window.currentGalleryIndex = idx;
+                            // Use modal helper (defined later) to display item by index
+                            if (typeof window.showMediaFromIndex === 'function') {
+                                window.showMediaFromIndex(idx);
+                            } else {
+                                // fallback: open modal with this item's media
+                                var $modal = jQuery('#mediaModal');
+                                var $modalImg = jQuery('#modalImage');
+                                var $modalVid = jQuery('#modalVideo');
+                                $modalImg.hide().attr('src', '');
+                                $modalVid.hide().attr('src', '');
+                                var mediaUrl = (item.type === 'video') ? item.videoUrl : item.imageUrl;
+                                if (item.type === 'photo') {
+                                    $modalImg.attr('src', mediaUrl).show();
+                                } else if (item.type === 'video') {
+                                    $modalVid.attr('src', mediaUrl).show();
+                                    try { $modalVid.get(0).play(); } catch(e){}
+                                }
+                                $modal.addClass('open');
+                            }
+                        });
+                    }
+                }
+
+                // (page-level arrow UI removed)
+            }
+
+            // Page-level arrow handlers removed — modal preview handles previous/next.
+
+            // Initial render
+            renderPage(1);
+        }
         
+        buildGallery(data);
+    })
+    .catch(error => {
+        console.error('Airtable fetch error:', error);
+    });
+});
+
         jQuery(document).ready(function ($) {
 			"use strict";
 			jQuery('.custom_bg').remove();            
@@ -453,17 +474,63 @@
             var $modalImg = jQuery('#modalImage');
             var $modalVid = jQuery('#modalVideo');
             var $close = jQuery('#closeModal');
+            var $prev = jQuery('#modalPrev');
+            var $next = jQuery('#modalNext');
 
             function closeModal() {
                 $modal.removeClass('open');
                 $modalImg.attr('src', '').hide();
+                try { $modalVid.get(0).pause(); } catch(e){}
                 $modalVid.attr('src', '').hide();
-                $modalVid.get(0).pause();
             }
+
+            function showMediaFromIndex(idx) {
+                var list = window.galleryItems || [];
+                if (!Array.isArray(list) || !list[idx]) return;
+                var itm = list[idx];
+                window.currentGalleryIndex = idx;
+                $modalImg.hide().attr('src', '');
+                try { $modalVid.get(0).pause(); } catch(e){}
+                $modalVid.hide().attr('src', '');
+
+                if (itm.type === 'photo') {
+                    $modalImg.attr('src', itm.imageUrl).show();
+                } else if (itm.type === 'video') {
+                    $modalVid.attr('src', itm.videoUrl).show();
+                    try { $modalVid.get(0).play(); } catch(e){}
+                } else if (itm.type === 'link') {
+                    // For link-type items, close the modal preview and open the link in a new tab
+                    closeModal();
+                    var targetUrl = itm.link || (itm.record && itm.record.fields && itm.record.fields.Link) || null;
+                    if (targetUrl) {
+                        try { window.open(targetUrl, '_blank'); } catch(e) { window.location.href = targetUrl; }
+                    }
+                    return;
+                }
+                $modal.addClass('open');
+                // update prev/next disabled states
+                $prev.prop('disabled', idx <= 0).toggleClass('disabled', idx <= 0);
+                $next.prop('disabled', idx >= (list.length - 1)).toggleClass('disabled', idx >= (list.length - 1));
+            }
+
+            window.showMediaFromIndex = showMediaFromIndex;
 
             $close.on('click', function(e){
                 e.preventDefault();
                 closeModal();
+            });
+
+            $prev.on('click', function(e){
+                e.preventDefault();
+                var idx = (typeof window.currentGalleryIndex === 'number') ? window.currentGalleryIndex - 1 : -1;
+                if (idx >= 0) showMediaFromIndex(idx);
+            });
+
+            $next.on('click', function(e){
+                e.preventDefault();
+                var list = window.galleryItems || [];
+                var idx = (typeof window.currentGalleryIndex === 'number') ? window.currentGalleryIndex + 1 : 0;
+                if (idx < list.length) showMediaFromIndex(idx);
             });
 
             // Clicking the overlay (but not the media) closes the modal
@@ -473,10 +540,20 @@
                 }
             });
 
-            // Esc key closes modal
+            // Esc key closes modal; left/right navigate
             jQuery(document).on('keydown', function(e){
                 if (e.key === 'Escape' || e.keyCode === 27) {
                     if ($modal.hasClass('open')) closeModal();
+                    return;
+                }
+                if (!$modal.hasClass('open')) return;
+                if (e.key === 'ArrowLeft' || e.keyCode === 37) {
+                    var prevIdx = (typeof window.currentGalleryIndex === 'number') ? window.currentGalleryIndex - 1 : -1;
+                    if (prevIdx >= 0) showMediaFromIndex(prevIdx);
+                } else if (e.key === 'ArrowRight' || e.keyCode === 39) {
+                    var nextIdx = (typeof window.currentGalleryIndex === 'number') ? window.currentGalleryIndex + 1 : 0;
+                    var list2 = window.galleryItems || [];
+                    if (nextIdx < list2.length) showMediaFromIndex(nextIdx);
                 }
             });
         })();

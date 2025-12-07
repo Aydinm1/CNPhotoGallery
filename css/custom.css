@@ -401,3 +401,58 @@ h6, h6 span, h6 a,
 	cursor: pointer;
 	z-index: 10000;
 }
+
+/* Hide page-level arrows (we now show arrows inside the preview/modal) */
+.page-arrows { display: none !important; }
+
+/* Modal navigation arrows */
+.modal-arrow {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: rgba(0,0,0,0.6);
+	color: #fff;
+	border: none;
+	font-size: 30px;
+	line-height: 56px;
+	text-align: center;
+	cursor: pointer;
+	z-index: 10003;
+	display: none; /* shown when modal.open via selector */
+}
+.modal-arrow.left { left: 20px; }
+.modal-arrow.right { right: 20px; }
+.modalOverlay.open .modal-arrow { display: block; }
+.modal-arrow.disabled { opacity: 0.35; cursor: default; }
+
+/* Page arrows */
+.page-arrows {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 0;
+	z-index: 10001;
+}
+.page-arrow {
+	position: fixed;
+	top: 50%;
+	background: rgba(0,0,0,0.6);
+	color: #fff;
+	border: none;
+	width: 52px;
+	height: 52px;
+	border-radius: 50%;
+	font-size: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transform: translateY(-50%);
+}
+.page-arrow.left { left: 18px; }
+.page-arrow.right { right: 18px; }
+.page-arrow.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
