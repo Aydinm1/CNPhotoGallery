@@ -64,6 +64,9 @@ if ($tableSelector === 'albums') {
     $url .= "&sort[0][field]=AlbumOrder&sort[0][direction]=asc";
 }
 
+if ($tableSelector === 'photos') {
+    $url .= "&sort[0][field]=Picture%20Order&sort[0][direction]=asc";
+}
 // Initialize cURL
 $ch = curl_init($url);
 
