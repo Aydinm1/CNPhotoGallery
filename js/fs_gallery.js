@@ -18,7 +18,13 @@ jQuery.fn.fs_gallery = function (fs_options) {
     fs_container = jQuery('.fs_gallery_container');
     fs_body.append('<div class="fs_title_wrapper ' + set_state + '"><h1 class="fs_title"></h1><h3 class="fs_descr"></h3></div>');
     if (fs_options.slides.length > 1) {
-        fs_body.append('<div class="controls_wrapper"><a href="javascript:void(0)" class="fs_slider_prev"/><a href="javascript:void(0)" id="fs_play-pause" class="' + playpause + '"></a><a href="javascript:void(0)" class="fs_slider_next"/></div>');
+        // add a fullscreen toggle button next to play/pause
+        fs_body.append('<div class="controls_wrapper">' +
+            '<a href="javascript:void(0)" class="fs_slider_prev"></a>' +
+            '<a href="javascript:void(0)" id="fs_play-pause" class="' + playpause + '"></a>' +
+            '<a href="javascript:void(0)" class="fs_fullscreen" title="Toggle Fullscreen"></a>' +
+            '<a href="javascript:void(0)" class="fs_slider_next"></a>' +
+            '</div>');
     }
     fs_body.append('<div class="fs_thmb_viewport ' + set_state + '"><div class="thmb-left"></div><div class="thmb-right"></div><div class="fs_thmb_wrapper"><ul class="fs_thmb_list" style="width:' + fs_options.slides.length * 80 + 'px"></ul</div></div>');
     fs_thmb = jQuery('.fs_thmb_list');
@@ -35,6 +41,8 @@ jQuery.fn.fs_gallery = function (fs_options) {
             fs_container.append('<li class="fs_slide slide' + thisSlide + '" data-count="' + thisSlide + '" data-src="' + fs_options.slides[thisSlide].image + '" data-type="' + fs_options.slides[thisSlide].type + '"></li>');
         } else if (fs_options.slides[thisSlide].type == "youtube") {
             fs_container.append('<li class="fs_slide yt_slide video_slide slide' + thisSlide + '" data-count="' + thisSlide + '" data-bg="' + fs_options.slides[thisSlide].thmb + '" data-src="' + fs_options.slides[thisSlide].src + '" data-type="' + fs_options.slides[thisSlide].type + '"></li>');
+        } else if (fs_options.slides[thisSlide].type == "mp4") {
+            fs_container.append('<li class="fs_slide video_slide slide' + thisSlide + '" data-count="' + thisSlide + '" data-src="' + fs_options.slides[thisSlide].src + '" data-bg="' + (fs_options.slides[thisSlide].thmb || '') + '" data-type="mp4"></li>');
         } else {
             fs_container.append('<li class="fs_slide video_slide slide' + thisSlide + '" data-id="player' + fs_options.slides[thisSlide].uniqid + '" data-count="' + thisSlide + '" data-bg="' + fs_options.slides[thisSlide].thmb + '" data-src="' + fs_options.slides[thisSlide].src + '" data-type="' + fs_options.slides[thisSlide].type + '"></li>');
         }
@@ -63,20 +71,36 @@ jQuery.fn.fs_gallery = function (fs_options) {
         firstObj.attr('style', 'background:url(' + fs_container.find('li.slide0').attr('data-src') + ') no-repeat;');
     } else if (firstObj.attr('data-type') == 'youtube') {
         firstObj.attr('style', 'background:url(' + fs_options.slides[0].thmb + ') no-repeat;');
-        firstObj.append('<iframe width="100%" height="100%" src="http://www.youtube.com/embed/' + fs_options.slides[0].src + '?controls=0&autoplay=0&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+        firstObj.append('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + fs_options.slides[0].src + '?controls=0&autoplay=0&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+    } else if (firstObj.attr('data-type') == 'mp4') {
+        firstObj.attr('style', 'background:url(' + fs_options.slides[0].thmb + ') no-repeat;');
+        var v0 = jQuery('<video width="100%" height="100%" playsinline muted controls preload="metadata"></video>');
+        v0.attr('src', fs_options.slides[0].src);
+        firstObj.append(v0);
+        try { v0.get(0).play(); } catch (e) { console.warn('MP4 autoplay blocked or failed for first slide', e); }
+        v0.on('ended', function () {
+            try {
+                firstObj.attr('style', '');
+                v0.remove();
+                setTimeout(function () { nextSlide(); }, 50);
+            } catch (e) { console.warn('nextSlide error on ended (first slide)', e); }
+        });
     } else {
         firstObj.attr('style', 'background:url(' + fs_options.slides[0].thmb + ') no-repeat;');
-        firstObj.append('<iframe src="http://player.vimeo.com/video/' + fs_options.slides[0].src + '?autoplay=0&loop=0&api=1&player_id=player' + fs_options.slides[0].uniqid + '" width="100%" height="100%" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
+        firstObj.append('<iframe src="https://player.vimeo.com/video/' + fs_options.slides[0].src + '?autoplay=0&loop=0&api=1&player_id=player' + fs_options.slides[0].uniqid + '" width="100%" height="100%" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
     }
     if (fs_options.slides.length > 1) {
         if (fNextObj.attr('data-type') == 'image') {
             fNextObj.attr('style', 'background:url(' + fs_container.find('li.slide1').attr('data-src') + ') no-repeat;');
         } else if (fNextObj.attr('data-type') == 'youtube') {
             fNextObj.attr('style', 'background:url(' + fs_options.slides[1].thmb + ') no-repeat;');
-            fNextObj.append('<iframe width="100%" height="100%" src="http://www.youtube.com/embed/' + fs_options.slides[1].src + '?controls=0&autoplay=0&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+            fNextObj.append('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + fs_options.slides[1].src + '?controls=0&autoplay=0&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+        } else if (fNextObj.attr('data-type') == 'mp4') {
+            fNextObj.attr('style', 'background:url(' + fs_options.slides[1].thmb + ') no-repeat;');
+            // do not auto-insert video for nextObj to avoid multiple players; background is enough
         } else {
             fNextObj.attr('style', 'background:url(' + fs_options.slides[1].thmb + ') no-repeat;');
-            firstObj.append('<iframe src="http://player.vimeo.com/video/' + fs_options.slides[1].src + '?autoplay=0&loop=0&api=1&player_id=player' + fs_options.slides[1].uniqid + '" width="100%" height="100%" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
+            firstObj.append('<iframe src="https://player.vimeo.com/video/' + fs_options.slides[1].src + '?autoplay=0&loop=0&api=1&player_id=player' + fs_options.slides[1].uniqid + '" width="100%" height="100%" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
         }
     }
 
@@ -105,12 +129,12 @@ jQuery.fn.fs_gallery = function (fs_options) {
                 'margin-top': '0px'
             });
 	} else {
-		jQuery('iframe').height(window_h).width(window_w-header_w).css({
-			'top': '0px',
-			'margin-left' : '0px',
-			'left' : header_w+'px',
-			'margin-top': '0px'
-		});			
+                jQuery('iframe').height(window_h).width(window_w).css({
+                    'top': '0px',
+                    'margin-left' : '0px',
+                    'left' : '0px',
+                    'margin-top': '0px'
+                });
 	}
 
     $fs_title.html(fs_options.slides[0].title).css('color', fs_options.slides[0].titleColor);
@@ -153,12 +177,123 @@ jQuery.fn.fs_gallery = function (fs_options) {
                 fs_interval = setInterval('nextSlide()', fs_options.slide_time);
             }
         });
+
+        // Fullscreen toggle handler
+        jQuery('.fs_fullscreen').click(function () {
+            var el = document.querySelector('.fs_gallery_wrapper');
+            if (!el) return;
+            var isFull = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            if (!isFull) {
+                if (el.requestFullscreen) el.requestFullscreen();
+                else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+                else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                else if (el.msRequestFullscreen) el.msRequestFullscreen();
+                jQuery('html').addClass('is-fullscreen');
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+                jQuery('html').removeClass('is-fullscreen');
+            }
+        });
+
+        // Keep html.is-fullscreen in sync with native fullscreenchange events
+        function fsChange() {
+            var isFullNow = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            if (isFullNow) jQuery('html').addClass('is-fullscreen');
+            else jQuery('html').removeClass('is-fullscreen');
+        }
+        document.addEventListener('fullscreenchange', fsChange);
+        document.addEventListener('webkitfullscreenchange', fsChange);
+        document.addEventListener('mozfullscreenchange', fsChange);
+        document.addEventListener('MSFullscreenChange', fsChange);
+
+        // Show controls on mouse movement while in fullscreen. Hide after inactivity.
+        (function () {
+            var controlsTimer = null;
+            var HIDE_MS = 2000;
+
+            function showControlsForAWhile() {
+                try {
+                    jQuery('html').addClass('show-controls');
+                    if (controlsTimer) clearTimeout(controlsTimer);
+                    controlsTimer = setTimeout(function () {
+                        jQuery('html').removeClass('show-controls');
+                    }, HIDE_MS);
+                } catch (e) {
+                    console.warn('showControlsForAWhile error', e);
+                }
+            }
+
+            // Keep controls visible while the cursor is over the gallery element
+            var galleryEl = document.querySelector('.fs_gallery_wrapper');
+            if (galleryEl) {
+                galleryEl.addEventListener('mouseenter', function () {
+                    try {
+                        if (controlsTimer) clearTimeout(controlsTimer);
+                        jQuery('html').addClass('show-controls');
+                    } catch (e) { console.warn('gallery mouseenter error', e); }
+                }, { passive: true });
+
+                galleryEl.addEventListener('mouseleave', function () {
+                    try {
+                        if (controlsTimer) clearTimeout(controlsTimer);
+                        controlsTimer = setTimeout(function () { jQuery('html').removeClass('show-controls'); }, HIDE_MS);
+                    } catch (e) { console.warn('gallery mouseleave error', e); }
+                }, { passive: true });
+            }
+
+            // Listen for mouse/pointer/touch move and show controls if in fullscreen
+            function onPointerEvent() {
+                var galleryExists = document.querySelector('.fs_gallery_wrapper');
+                if (!galleryExists) return;
+                showControlsForAWhile();
+            }
+
+            // Attach a document-level pointer/mouse listener so normal fullscreen and normal pages work
+            document.addEventListener('mousemove', onPointerEvent, { passive: true });
+            document.addEventListener('pointermove', onPointerEvent, { passive: true });
+            document.addEventListener('touchstart', onPointerEvent, { passive: true });
+
+            // When entering fullscreen, attach the same handlers directly to the fullscreen element
+            // Some browsers (Chrome) route pointer events to the fullscreen element (video/iframe)
+            var _fsAttachedEl = null;
+            function attachToFullscreenElement() {
+                try {
+                    var el = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                    // remove listeners from previous element
+                    if (_fsAttachedEl && _fsAttachedEl !== el) {
+                        _fsAttachedEl.removeEventListener('pointermove', onPointerEvent);
+                        _fsAttachedEl.removeEventListener('mousemove', onPointerEvent);
+                        _fsAttachedEl.removeEventListener('touchstart', onPointerEvent);
+                        _fsAttachedEl = null;
+                    }
+                    if (el && _fsAttachedEl !== el) {
+                        el.addEventListener('pointermove', onPointerEvent, { passive: true });
+                        el.addEventListener('mousemove', onPointerEvent, { passive: true });
+                        el.addEventListener('touchstart', onPointerEvent, { passive: true });
+                        _fsAttachedEl = el;
+                    }
+                    // always reveal controls immediately on fullscreen change
+                    var galleryExists = document.querySelector('.fs_gallery_wrapper');
+                    if (galleryExists) showControlsForAWhile();
+                } catch (e) {
+                    console.warn('attachToFullscreenElement error', e);
+                }
+            }
+
+            document.addEventListener('fullscreenchange', attachToFullscreenElement);
+            document.addEventListener('webkitfullscreenchange', attachToFullscreenElement);
+            document.addEventListener('mozfullscreenchange', attachToFullscreenElement);
+            document.addEventListener('MSFullscreenChange', attachToFullscreenElement);
+        })();
     }
     /* N E X T   S L I D E */
     nextSlide = function () {
         clearInterval(fs_interval);
         thisSlide = parseInt(fs_container.find('.current-slide').attr('data-count'));
-        fs_container.find('.slide' + thisSlide).find('iframe').remove();
+        fs_container.find('.slide' + thisSlide).find('iframe, video').remove();
         thisSlide++;
         cleanSlide = thisSlide - 2;
         nxtSlide = thisSlide + 1;
@@ -184,18 +319,44 @@ jQuery.fn.fs_gallery = function (fs_options) {
         fs_container.find('.slide' + cleanSlide).attr('style', '');
         if (currentObj.attr('data-type') == 'image') {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-src') + ') no-repeat;');
-        } else if (currentObj.attr('data-type') == 'youtube') {
+            } else if (currentObj.attr('data-type') == 'youtube') {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-bg') + ') no-repeat;');
-            currentObj.append('<iframe width="100%" height="100%" src="http://www.youtube.com/embed/' + currentObj.attr('data-src') + '?controls=0&autoplay=1&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
-        } else {
+            currentObj.append('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + currentObj.attr('data-src') + '?controls=0&autoplay=1&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+            } else if (currentObj.attr('data-type') == 'mp4') {
+                // For mp4 slides do NOT show the thumbnail as a background (prevents flash before/after)
+                // Set a neutral background and make container positioned so the video can fill it
+                currentObj.attr('style', 'background-color:#000; position:relative; overflow:hidden;');
+                // Insert HTML5 video element (do not loop so we can advance when it ends)
+                var v = jQuery('<video width="100%" height="100%" playsinline muted controls preload="metadata"></video>');
+                v.attr('src', currentObj.attr('data-src'));
+                // Make the video absolutely fill the slide and cover any aspect difference
+                v.css({ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 'object-fit': 'cover' });
+                currentObj.append(v);
+                // stop the slide interval while video plays
+                try { if (typeof fs_interval !== 'undefined') clearInterval(fs_interval); } catch (e) {}
+                // attempt to play and advance to nextSlide when it ends
+                try {
+                    v.get(0).play();
+                } catch (e) {
+                    console.warn('MP4 autoplay blocked or failed', e);
+                }
+                v.on('ended', function () {
+                    try {
+                        // remove video and clear styling before advancing to avoid showing thumbnail
+                        v.remove();
+                        currentObj.attr('style', 'background-color:#000; position:relative; overflow:hidden;');
+                        setTimeout(function () { nextSlide(); }, 50);
+                    } catch (e) { console.warn('nextSlide error on ended', e); }
+                });
+            } else {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-bg') + ') no-repeat;');
-            currentObj.append(jQuery('<iframe width="100%" height="100%" src="http://player.vimeo.com/video/' + currentObj.attr('data-src') + '?api=1&amp;title=0&amp;byline=0&amp;portrait=0&autoplay=1&loop=0&controls=0&player_id=' + currentObj.attr('data-id') + '" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>').attr('id', currentObj.attr('data-id')));
+            currentObj.append(jQuery('<iframe width="100%" height="100%" src="https://player.vimeo.com/video/' + currentObj.attr('data-src') + '?api=1&amp;title=0&amp;byline=0&amp;portrait=0&autoplay=1&loop=0&controls=0&player_id=' + currentObj.attr('data-id') + '" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>').attr('id', currentObj.attr('data-id')));
         }
 
         if (nextObj.attr('data-type') == 'image') {
             nextObj.attr('style', 'background:url(' + nextObj.attr('data-src') + ') no-repeat;');
-        } else if (nextObj.attr('data-type') == 'youtube') {
-            nextObj.attr('style', 'background:url(' + nextObj.attr('data-bg') + ') no-repeat;');
+            } else if (fNextObj.attr('data-type') == 'youtube') {
+            fNextObj.attr('style', 'background:url(' + fNextObj.attr('data-bg') + ') no-repeat;');
         } else {
             nextObj.attr('style', 'background:url(' + nextObj.attr('data-bg') + ') no-repeat;');
         }
@@ -254,12 +415,12 @@ jQuery.fn.fs_gallery = function (fs_options) {
                 'margin-top': '0px'
             });
         } else {
-            jQuery('iframe').height(window_h).width(window_w-header_w).css({
-                'top': '0px',
-                'margin-left' : '0px',
-				'left' : header_w+'px',
-                'margin-top': '0px'
-            });			
+                    jQuery('iframe').height(window_h).width(window_w).css({
+                        'top': '0px',
+                        'margin-left': '0px',
+                        'left': '0px',
+                        'margin-top': '0px'
+                    });
 		}
         if (!fs_thmb.hasClass('paused') && currentObj.attr('data-type') == 'image') {
             fs_interval = setInterval('nextSlide()', fs_options.slide_time);
@@ -270,7 +431,7 @@ jQuery.fn.fs_gallery = function (fs_options) {
     prevSlide = function () {
         clearInterval(fs_interval);
         thisSlide = parseInt(fs_container.find('.current-slide').attr('data-count'));
-        fs_container.find('.slide' + thisSlide).find('iframe').remove();
+        fs_container.find('.slide' + thisSlide).find('iframe, video').remove();
         thisSlide--;
         nxtSlide = thisSlide - 1;
         cleanSlide = thisSlide + 2;
@@ -298,6 +459,21 @@ jQuery.fn.fs_gallery = function (fs_options) {
         } else if (currentObj.attr('data-type') == 'youtube') {
             currentObj.attr('style', 'background:url(' + nextObj.attr('data-bg') + ') no-repeat;');
             currentObj.append('<iframe width="100%" height="100%" src="http://www.youtube.com/embed/' + currentObj.attr('data-src') + '?controls=0&autoplay=1&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+        } else if (currentObj.attr('data-type') == 'mp4') {
+            currentObj.attr('style', 'background-color:#000; position:relative; overflow:hidden;');
+            var v = jQuery('<video width="100%" height="100%" playsinline muted controls preload="metadata"></video>');
+            v.attr('src', currentObj.attr('data-src'));
+            v.css({ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 'object-fit': 'cover' });
+            currentObj.append(v);
+            try { if (typeof fs_interval !== 'undefined') clearInterval(fs_interval); } catch (e) {}
+            try { v.get(0).play(); } catch (e) { console.warn('MP4 autoplay blocked or failed (prevSlide)', e); }
+            v.on('ended', function () {
+                try {
+                    v.remove();
+                    currentObj.attr('style', 'background-color:#000; position:relative; overflow:hidden;');
+                    setTimeout(function () { nextSlide(); }, 50);
+                } catch (e) { console.warn('nextSlide error on ended', e); }
+            });
         } else {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-bg') + ') no-repeat;');
             currentObj.append(jQuery('<iframe width="100%" height="100%" src="http://player.vimeo.com/video/' + currentObj.attr('data-src') + '?api=1&amp;title=0&amp;byline=0&amp;portrait=0&autoplay=1&loop=0&controls=0&player_id=' + currentObj.attr('data-id') + '" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>').attr('id', currentObj.attr('data-id')));
@@ -305,9 +481,9 @@ jQuery.fn.fs_gallery = function (fs_options) {
 
         if (nextObj.attr('data-type') == 'image') {
             nextObj.attr('style', 'background:url(' + nextObj.attr('data-src') + ') no-repeat;');
-        } else if (nextObj.attr('data-type') == 'youtube') {
-            nextObj.attr('style', 'background:url(' + nextObj.attr('data-bg') + ') no-repeat;');
-        } else {
+            } else if (fNextObj.attr('data-type') == 'youtube') {
+            fNextObj.attr('style', 'background:url(' + fNextObj.attr('data-bg') + ') no-repeat;');
+            fNextObj.append('<iframe width="100%" height="100%" src="https://www.youtube.com/embed/' + fNextObj.attr('data-src') + '?controls=0&autoplay=0&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
             nextObj.attr('style', 'background:url(' + nextObj.attr('data-bg') + ') no-repeat;');
         }
         jQuery('.current-slide').removeClass('current-slide');
@@ -338,12 +514,12 @@ jQuery.fn.fs_gallery = function (fs_options) {
                 'margin-top': '0px'
             });
         } else {
-            jQuery('iframe').height(window_h).width(window_w-header_w).css({
-                'top': '0px',
-                'margin-left' : '0px',
-				'left' : header_w+'px',
-                'margin-top': '0px'
-            });			
+                    jQuery('iframe').height(window_h).width(window_w).css({
+                        'top': '0px',
+                        'margin-left': '0px',
+                        'left': '0px',
+                        'margin-top': '0px'
+                    });
 		}
 
         jQuery('.current-slide').removeClass('current-slide');
@@ -369,13 +545,28 @@ jQuery.fn.fs_gallery = function (fs_options) {
         });
 
         fs_container.find('.fs_slide').attr('style', '');
-        fs_container.find('.fs_slide').find('iframe').remove();
+        fs_container.find('.fs_slide').find('iframe, video').remove();
         currentObj = fs_container.find('.slide' + thisSlide);
         if (currentObj.attr('data-type') == 'image') {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-src') + ') no-repeat;');
         } else if (currentObj.attr('data-type') == 'youtube') {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-bg') + ') no-repeat;');
-			currentObj.append('<iframe width="100%" height="100%" src="http://www.youtube.com/embed/' + currentObj.attr('data-src') + '?controls=0&autoplay=1&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+            currentObj.append('<iframe width="100%" height="100%" src="http://www.youtube.com/embed/' + currentObj.attr('data-src') + '?controls=0&autoplay=1&showinfo=0&modestbranding=1&wmode=opaque&rel=0&hd=1&disablekb=1" frameborder="0" allowfullscreen></iframe>');
+        } else if (currentObj.attr('data-type') == 'mp4') {
+            currentObj.attr('style', 'background-color:#000; position:relative; overflow:hidden;');
+            var v = jQuery('<video width="100%" height="100%" playsinline muted controls preload="metadata"></video>');
+            v.attr('src', currentObj.attr('data-src'));
+            v.css({ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 'object-fit': 'cover' });
+            currentObj.append(v);
+            try { if (typeof fs_interval !== 'undefined') clearInterval(fs_interval); } catch (e) {}
+            try { v.get(0).play(); } catch (e) { console.warn('MP4 autoplay blocked or failed (goToSlide)', e); }
+            v.on('ended', function () {
+                try {
+                    v.remove();
+                    currentObj.attr('style', 'background-color:#000; position:relative; overflow:hidden;');
+                    setTimeout(function () { nextSlide(); }, 50);
+                } catch (e) { console.warn('nextSlide error on ended', e); }
+            });
         } else {
             currentObj.attr('style', 'background:url(' + currentObj.attr('data-bg') + ') no-repeat;');
             currentObj.append(jQuery('<iframe width="100%" height="100%" src="http://player.vimeo.com/video/' + currentObj.attr('data-src') + '?api=1&amp;title=0&amp;byline=0&amp;portrait=0&autoplay=1&loop=0&controls=0&player_id=' + currentObj.attr('data-id') + '" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>').attr('id', currentObj.attr('data-id')));
@@ -414,13 +605,13 @@ jQuery.fn.fs_gallery = function (fs_options) {
                 'margin-top': '0px'
             });
         } else {
-            jQuery('iframe').height(window_h).width(window_w-header_w).css({
+            jQuery('iframe').height(window_h).width(window_w).css({
                 'top': '0px',
                 'margin-left' : '0px',
-				'left' : header_w+'px',
+                'left' : '0px',
                 'margin-top': '0px'
-            });			
-		}
+            });
+        }
     }
 }
 
@@ -537,11 +728,11 @@ jQuery(window).resize(function () {
             'margin-top': '0px'
         });
     } else {
-		jQuery('iframe').height(window_h).width(window_w-header_w).css({
-			'top': '0px',
-			'margin-left' : '0px',
-			'left' : header_w+'px',
-			'margin-top': '0px'
-		});			
-	}
+        jQuery('iframe').height(window_h).width(window_w).css({
+            'top': '0px',
+            'margin-left' : '0px',
+            'left' : '0px',
+            'margin-top': '0px'
+        });
+    }
 });

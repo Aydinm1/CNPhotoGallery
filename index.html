@@ -61,32 +61,183 @@
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>    
     <script type="text/javascript" src="js/modules.js"></script>
 	<script type="text/javascript" src="js/theme.js"></script>
-    <script>
-    	gallery_set = [
-			{type: "image", image: "img/gallery/slider/1.jpg", thmb: "img/gallery/slider/thumbs/1.jpg", alt: "Sarah Brown", title: "Sarah Brown", description: "Curabitur condimentum pharetra metus, sit amet facilisis ante laoreet rutrum.", titleColor: "#ffffff", descriptionColor: "#ffffff"},
-			{type: "image", image: "img/gallery/slider/2.jpg", thmb: "img/gallery/slider/thumbs/2.jpg", alt: "", title: "", description: "", titleColor: "#000000", descriptionColor: "#000000"},
-			{type: "vimeo", uniqid: "4675", src: "80033084", thmb: "img/gallery/slider/thumbs/3.jpg", alt: "", title: "", description: "", titleColor: "#000000", descriptionColor: "#000000"},
-			{type: "image", image: "img/gallery/slider/4.jpg", thmb: "img/gallery/slider/thumbs/4.jpg", alt: "Jessica Black", title: "Jessica Black", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit aliquam mi mauris.", titleColor: "#ffffff", descriptionColor: "#ffffff"},
-			{type: "image", image: "img/gallery/slider/5.jpg", thmb: "img/gallery/slider/thumbs/5.jpg", alt: "", title: "", description: "", titleColor: "#000000", descriptionColor: "#000000"},
-			{type: "image", image: "img/gallery/slider/6.jpg", thmb: "img/gallery/slider/thumbs/6.jpg", alt: "Anna White", title: "Anna White", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit aliquam mi mauris.", titleColor: "#ffffff", descriptionColor: "#ffffff"},
-			{type: "image", image: "img/gallery/slider/7.jpg", thmb: "img/gallery/slider/thumbs/7.jpg", alt: "Sarah Brown", title: "Sarah Brown", description: "Curabitur condimentum pharetra metus, sit amet facilisis ante laoreet rutrum.", titleColor: "#000000", descriptionColor: "#000000"},
-			{type: "image", image: "img/gallery/slider/8.jpg", thmb: "img/gallery/slider/thumbs/8.jpg", alt: "Jessica Black", title: "Jessica Black", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit aliquam mi mauris.", titleColor: "#ffffff", descriptionColor: "#ffffff"},
-			{type: "image", image: "img/gallery/slider/9.jpg", thmb: "img/gallery/slider/thumbs/9.jpg", alt: "Amelia Thomas", title: "Amelia Thomas", description: "Curabitur condimentum pharetra metus, sit amet facilisis ante laoreet rutrum.", titleColor: "#ffffff", descriptionColor: "#ffffff"},
-			{type: "image", image: "img/gallery/slider/10.jpg", thmb: "img/gallery/slider/thumbs/10.jpg", alt: "Laura Brown", title: "Laura Brown", description: "Etiam vitae lobortis nulla nam nisi enim, ultricies eget ex auctor.", titleColor: "#ffffff", descriptionColor: "#ffffff"}
-		]
-		
-		jQuery(document).ready(function(){
-			"use strict";
-			jQuery('html').addClass('hasPag');
-			jQuery('.custom_bg').remove();
-			jQuery('body').fs_gallery({
-				fx: 'fade', /*fade, zoom, slide_left, slide_right, slide_top, slide_bottom*/
-				fit: 'no_fit',
-				slide_time: 3300, /*This time must be < then time in css*/
-				autoplay: 1,
-				show_controls: 1,
-				slides: gallery_set
+	<script>
+		// Build fullscreen slider from Airtable via the server proxy.
+		(function(){
+			var apiUrl = '/api/airtable.php';
+
+			function buildSlidesFromData(data) {
+				var slides = [];
+				if (!data || !Array.isArray(data.records)) return slides;
+
+				for (var i = 0; i < data.records.length; i++) {
+					var rec = data.records[i];
+					var f = rec.fields || {};
+					// Only include published items
+					if (f.Published !== true) continue;
+
+					// Require an explicit 'Add to Home Page' checkbox (hand-selected)
+					// Keep fallbacks for older field names if present
+					var addToHome = (f['Add to Home Page'] === true) || (f.Featured === true) || (f.ShowOnHome === true) || (f.Home === true);
+					if (!addToHome) continue;
+
+					var type = (String(f.Type || '').toLowerCase());
+
+					// Get photo thumbnail or image
+					var imageUrl = '';
+					if (Array.isArray(f.Photo) && f.Photo[0]) {
+						var p = f.Photo[0];
+						if (p.thumbnails && p.thumbnails.large && p.thumbnails.large.url) imageUrl = p.thumbnails.large.url;
+						else if (p.url) imageUrl = p.url;
+					}
+
+					// Get video attachment if present
+					var videoUrl = '';
+					var videoAtt = (Array.isArray(f.Video) && f.Video[0]) ? f.Video[0] : null;
+					if (videoAtt) {
+						videoUrl = videoAtt.url || '';
+					}
+
+					// Normalize into the fs_gallery slide format
+					if (type === 'video' && videoUrl) {
+						// Detect YouTube and Vimeo links and extract IDs
+						var ytMatch = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+						var vimeoMatch = videoUrl.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+						if (ytMatch && ytMatch[1]) {
+							slides.push({
+								type: 'youtube',
+								src: ytMatch[1],
+								thmb: imageUrl || '',
+								title: f.Title || f.Name || '',
+								description: f.Description || f.Caption || ''
+							});
+						} else if (vimeoMatch && vimeoMatch[1]) {
+							slides.push({
+								type: 'vimeo',
+								src: vimeoMatch[1],
+								uniqid: 'v' + (new Date().getTime()) + '_' + i,
+								thmb: imageUrl || '',
+								title: f.Title || f.Name || '',
+								description: f.Description || f.Caption || ''
+							});
+						} else if (videoAtt && ((videoAtt.type && /^video\//i.test(videoAtt.type)) || (videoAtt.filename && videoAtt.filename.match(/\.mp4$/i)))) {
+							// Attachment metadata indicates a video (likely MP4) even if URL lacks extension
+							slides.push({
+								type: 'mp4',
+								src: videoUrl,
+								thmb: imageUrl || '',
+								title: f.Title || f.Name || '',
+								description: f.Description || f.Caption || ''
+							});
+						} else if (videoUrl.match(/\.mp4($|\?)/i)) {
+							// Fallback: URL contains .mp4
+							slides.push({
+								type: 'mp4',
+								src: videoUrl,
+								thmb: imageUrl || '',
+								title: f.Title || f.Name || '',
+								description: f.Description || f.Caption || ''
+							});
+						} else {
+							// Unknown video host — log attachment for debugging and skip to avoid broken iframes
+							console.warn('Skipping unsupported video URL for record', rec.id, videoUrl, videoAtt);
+						}
+					} else if (type === 'photo' && imageUrl) {
+						slides.push({
+							type: 'image',
+							image: imageUrl,
+							thmb: imageUrl,
+							title: f.Title || f.Name || '',
+							description: f.Description || f.Caption || ''
+						});
+					}
+				}
+				return slides;
+			}
+
+			// Fetch Airtable and initialize slider
+			fetch(apiUrl).then(function(res){
+				if (!res.ok) throw new Error('HTTP ' + res.status);
+				return res.json();
+			}).then(function(data){
+				var slides = buildSlidesFromData(data);
+				// Expose built slides for debugging
+				window.homeSlides = slides;
+				console.log('homeSlides:', slides);
+				// Fallback: if no slides found, leave default static set (do nothing)
+				if (!slides || slides.length === 0) {
+					console.warn('No featured slides found in Airtable. Slider will use static set.');
+				}
+
+				jQuery(document).ready(function(){
+					"use strict";
+					jQuery('html').addClass('hasPag');
+					jQuery('.custom_bg').remove();
+					jQuery('body').fs_gallery({
+						fx: 'fade', /*fade, zoom, slide_left, slide_right, slide_top, slide_bottom*/
+						fit: 'no_fit',
+						slide_time: 3300, /*This time must be < then time in css*/
+						autoplay: 1,
+						show_controls: 1,
+						slides: (slides && slides.length > 0 ? slides : window.gallery_set || [])
+					});
+
+					jQuery('.fs_share').click(function(){
+						jQuery('.fs_fadder').removeClass('hided');
+						jQuery('.fs_sharing_wrapper').removeClass('hided');
+						jQuery('.fs_share_close').removeClass('hided');
+					});
+					jQuery('.fs_share_close').click(function(){
+						jQuery('.fs_fadder').addClass('hided');
+						jQuery('.fs_sharing_wrapper').addClass('hided');
+						jQuery('.fs_share_close').addClass('hided');
+					});
+					jQuery('.fs_fadder').click(function(){
+						jQuery('.fs_fadder').addClass('hided');
+						jQuery('.fs_sharing_wrapper').addClass('hided');
+						jQuery('.fs_share_close').addClass('hided');
+					});
+
+					jQuery('.fs_controls').addClass('up_me');
+					jQuery('.fs_title_wrapper ').addClass('up_me');
+					jQuery('.close_controls').click(function(){
+						if (jQuery(this).hasClass('open_controls')) {
+							jQuery('.fs_controls').removeClass('hide_me');
+							jQuery('.fs_title_wrapper ').removeClass('hide_me');
+							jQuery('.fs_thmb_viewport').removeClass('hide_me');
+							jQuery('header.main_header').removeClass('hide_me');
+							jQuery(this).removeClass('open_controls');
+						} else {        
+							jQuery('header.main_header').addClass('hide_me');
+							jQuery('.fs_controls').addClass('hide_me');
+							jQuery('.fs_title_wrapper ').addClass('hide_me');
+							jQuery('.fs_thmb_viewport').addClass('hide_me');
+							jQuery(this).addClass('open_controls');
+						}
+					});
+					jQuery('.main_header').removeClass('hided');
+					jQuery('html').addClass('single-gallery');
+					jQuery('.control_toggle').click(function(){
+						jQuery('html').toggleClass('hide_controls');
+					});
+				});
+			}).catch(function(err){
+				console.error('Failed to load Airtable slides:', err);
+				// initialize with fallback static set if available
+				jQuery(document).ready(function(){
+					jQuery('html').addClass('hasPag');
+					jQuery('.custom_bg').remove();
+					jQuery('body').fs_gallery({
+						fx: 'fade',
+						fit: 'no_fit',
+						slide_time: 3300,
+						autoplay: 1,
+						show_controls: 1,
+						slides: window.gallery_set || []
+					});
+				});
 			});
+		})();
 			jQuery('.fs_share').click(function(){
 				jQuery('.fs_fadder').removeClass('hided');
 				jQuery('.fs_sharing_wrapper').removeClass('hided');
@@ -127,7 +278,6 @@
 			jQuery('.control_toggle').click(function(){
 				jQuery('html').toggleClass('hide_controls');
 			});			
-		});
 	</script>
     <script type="text/javascript" src="js/fs_gallery.js"></script>
 </body>
