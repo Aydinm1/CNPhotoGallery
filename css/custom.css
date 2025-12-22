@@ -359,6 +359,208 @@ h6, h6 span, h6 a,
 	object-fit: cover;
 }
 
+/* Ensure 4 items per row with proper grid layout */
+.fullscreen_block .fs_blog_module {
+	font-size: 0; /* Remove inline-block spacing */
+	letter-spacing: 0;
+	word-spacing: 0;
+	margin-left: 40px; /* Shift right by half of right padding (40px / 2 = 20px) */
+	margin-right: 0;
+	margin-top: 40px;
+	width: 100%;
+	padding-right: 30px; /* Add some right padding to balance */
+}
+
+.fullscreen_block .blogpost_preview_fw {
+	width: calc((100% - 5%) / 4) !important; /* 4 items, each with 1.25% padding-right = 5% total padding, remaining 95% divided by 4 */
+	display: inline-block;
+	vertical-align: top;
+	box-sizing: border-box;
+	padding-right: 1.25% !important;
+	padding-bottom: 1.25% !important;
+	margin: 0;
+	font-size: 14px; /* Restore font size for content */
+}
+
+/* All items including the 4th have the same padding */
+.fullscreen_block .blogpost_preview_fw:nth-child(4n) {
+	padding-right: 1.25% !important;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block {
+	aspect-ratio: 1 / 1;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Keep album thumbnails square */
+.fw_port_module .fw-portPreview-wrapper.mas_style1 a {
+	aspect-ratio: 1 / 1;
+}
+
+.fw_port_module .fw-portPreview-wrapper.mas_style1 img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Media gradient overlay and title on hover */
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block {
+	position: relative;
+	overflow: hidden;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block .featured_ico_link {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block .media-gradient-overlay {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 100%;
+	background: #212121;
+	background: linear-gradient(to top, rgba(33, 33, 33, 1) 0%, rgba(0, 0, 0, 0) 100%);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover .media-gradient-overlay {
+	opacity: 1;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block .media-title-text {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 20px;
+	color: white;
+	font-size: 16px;
+	font-weight: 500;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	pointer-events: none;
+	z-index: 2;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover .media-title-text {
+	opacity: 1;
+}
+
+/* Disable default hover effects for photos, videos, and links - only show gradient and text */
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="photo"] .featured_item_fadder,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="video"] .featured_item_fadder,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="link"] .featured_item_fadder {
+	background: transparent !important;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="photo"] img,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="video"] img,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="link"] img {
+	transform: none !important;
+	opacity: 1 !important;
+	filter: none !important;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="photo"] span,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="video"] span,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="link"] span {
+	transform: none !important;
+	opacity: 1 !important;
+}
+
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="photo"] .gallery_likes,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="video"] .gallery_likes,
+.fw_port_module2 .fw-portPreview-wrapper.featured_items .img_block:hover a[data-media-type="link"] .gallery_likes {
+	transform: none !important;
+	opacity: 1 !important;
+}
+
+/* Remove arrow from Home menu item */
+.main_header nav ul.menu > li:first-child > a:before {
+	content: "" !important;
+}
+
+/* Remove the sideways arrow (before) from Albums menu item - we only want the dropdown arrow (after) */
+.main_header nav ul.menu > li.menu-item-has-children > a:before {
+	content: "" !important;
+}
+
+/* Hide Albums dropdown by default - only show on click */
+.main_header nav ul.menu > li.menu-item-has-children > ul.sub-menu {
+	display: none;
+}
+
+/* Show dropdown when active class is added */
+.main_header nav ul.menu > li.menu-item-has-children.active > ul.sub-menu {
+	display: block;
+}
+
+/* Add clickable arrow indicator */
+.main_header nav ul.menu > li.menu-item-has-children > a {
+	position: relative;
+	padding-right: 25px;
+}
+
+.main_header nav ul.menu > li.menu-item-has-children > a:after {
+	content: "\f107";
+	font-family: 'FontAwesome';
+	font-size: 12px;
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	cursor: pointer;
+	opacity: 0.8;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.main_header nav ul.menu > li.menu-item-has-children > a:hover:after {
+	opacity: 1;
+}
+
+.main_header nav ul.menu > li.menu-item-has-children.active > a:after {
+	transform: translateY(-50%) rotate(180deg);
+}
+
+/* Skeleton loading boxes */
+.skeleton-loader {
+	opacity: 1;
+}
+
+.skeleton-box {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 1 / 1;
+	background: #e0e0e0;
+	border-radius: 2px;
+	animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+	0% {
+		background-color: #e0e0e0;
+	}
+	50% {
+		background-color: #d0d0d0;
+	}
+	100% {
+		background-color: #e0e0e0;
+	}
+}
+
 .modalOverlay 
 {
 	width: 100%;
@@ -599,3 +801,32 @@ html.show-controls .controls_wrapper a.fs_slider_next {
 
 /* Hide the big gallery title (e.g. "PICTURE 26") */
 .fs_title { display: none !important; }
+
+/* Code Ninjas social icon styling - bigger than other social icons, aligned with others */
+.socials_list li a.ico_social_codeninjas {
+	display: inline-block;
+	width: 60px;
+	height: 60px;
+	position: relative;
+	vertical-align: middle;
+	line-height: 20px;
+}
+
+.socials_list li a.ico_social_codeninjas img {
+	width: 60px;
+	height: 60px;
+	display: block;
+	position: absolute;
+	left: 0;
+	top: 50%;
+	margin-top: -40px; 
+	margin-left: -20px; /* Move up more to align with other icons */
+	object-fit: contain;
+	opacity: 1;
+	transition: opacity 300ms;
+	z-index: 13;
+}
+
+.socials_list li a.ico_social_codeninjas:hover img {
+	opacity: 0.5;
+}

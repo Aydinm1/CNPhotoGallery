@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="img/apple_icons_57x57.png">
 <link rel="apple-touch-icon" sizes="72x72" href="img/apple_icons_72x72.png">
 <link rel="apple-touch-icon" sizes="114x114" href="img/apple_icons_114x114.png">
-<title>Aarav Code Ninjas Photo Gallery | Html Photography Template</title>
+<title>Code Ninjas Photo Gallery</title>
 <link href="https://fonts.googleapis.com/css?family=Roboto:400,700,400italic" rel="stylesheet" type="text/css">
 <link href="https://fonts.googleapis.com/css?family=Muli" rel="stylesheet" type="text/css">
 <link rel="stylesheet" href="css/theme.css" type="text/css" media="all" />
@@ -26,13 +26,10 @@
                             	<a href="index.html"><span>Home</span></a>                             
                             </li>
                             <li class="menu-item-has-children">
-                            	<a href="#"><span>Galleries</span></a>
-                                <ul class="sub-menu">
-                                    <li><a href="gallery_albums.html"><span>Albums</span></a></li>
-                                    <li><a href="portfolio_grid3.html"><span>Gallery</span></a></li>
+                            	<a href="albums.html"><span>Albums</span></a>
+                                <ul class="sub-menu" id="albums-dropdown">
+                                    <!-- Albums will be dynamically loaded here -->
                                 </ul>
-                            </li>
-                         </li> 
                             </li>
                         </ul>                    
                     </div>
@@ -42,10 +39,9 @@
             <div class="footer_wrapper">            
                 <div class="socials_wrapper">
                     <ul class="socials_list">
-                    	<li><a class="ico_social_facebook" target="_blank" href="http://facebook.com" title="Facebook"></a></li>
-                        <li><a class="ico_social_pinterest" target="_blank" href="http://pinterest.com" title="Pinterest"></a></li>
-                        <li><a class="ico_social_instagram" target="_blank" href="http://instagram.com" title="Instagram"></a></li>
-                        <li><a class="ico_social_flickr" target="_blank" href="http://flickr.com" title="Flickr"></a></li>
+                    	<li><a class="ico_social_facebook" target="_blank" href="https://www.facebook.com/CodeNinjasLibertyville/" title="Facebook"></a></li>
+                        <li><a class="ico_social_instagram" target="_blank" href="https://www.instagram.com/codeninjas/?hl=en" title="Instagram"></a></li>
+                        <li><a class="ico_social_codeninjas" target="_blank" href="https://www.codeninjas.com/" title="Code Ninjas"><img src="img/small-icon.png" alt="Code Ninjas"></a></li>
                     </ul>
                 </div>
                 <div class="copyright">Copyright &copy; Code Ninjas.<br>All Rights Reserved</div>
@@ -279,6 +275,74 @@
 				jQuery('html').toggleClass('hide_controls');
 			});			
 	</script>
+    <script>
+        // Load albums dynamically into dropdown menu
+        (function() {
+            const apiUrl = '/api/airtable.php?table=albums';
+            fetch(apiUrl)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data && data.records && Array.isArray(data.records)) {
+                        // Build dropdown menu items from albums
+                        var $dropdown = jQuery('#albums-dropdown');
+                        if ($dropdown.length) {
+                            $dropdown.empty();
+                            
+                            // Add all albums
+                            for (var i = 0; i < data.records.length; i++) {
+                                var record = data.records[i];
+                                if (record.fields.Published !== true) continue;
+                                
+                                var albumID = record.id || '';
+                                var albumName = record.fields.Title || 'Untitled Album';
+                                var $li = jQuery('<li><a href="photo_grid.html?album=' + encodeURIComponent(albumID) + '"><span>' + albumName + '</span></a></li>');
+                                $dropdown.append($li);
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading albums for dropdown:', error);
+                });
+        })();
+    </script>
+    <script>
+        // Handle click on Albums arrow to toggle dropdown
+        jQuery(document).ready(function($) {
+            $('.main_header nav ul.menu > li.menu-item-has-children > a').on('click', function(e) {
+                var $link = $(this);
+                var $parent = $link.parent('li');
+                var linkOffset = $link.offset();
+                var linkWidth = $link.outerWidth();
+                var clickX = e.pageX - linkOffset.left;
+                
+                // If click is in the arrow area (right 20px), toggle dropdown
+                if (clickX > linkWidth - 20) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Toggle active class
+                    $parent.toggleClass('active');
+                    
+                    // Close other dropdowns
+                    $('.main_header nav ul.menu > li.menu-item-has-children').not($parent).removeClass('active');
+                }
+                // Otherwise, allow normal link navigation to albums.html
+            });
+            
+            // Close dropdown when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.main_header nav ul.menu > li.menu-item-has-children').length) {
+                    $('.main_header nav ul.menu > li.menu-item-has-children').removeClass('active');
+                }
+            });
+        });
+    </script>
     <script type="text/javascript" src="js/fs_gallery.js"></script>
 </body>
 </html>
