@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // Load configuration from a separate file (outside web root if possible)
 // Create a config.php file in the same directory with your credentials
-require_once(__DIR__ . '/config.php');
+require_once(__DIR__ . '/../private/config.php');
 
 // Validate configuration
 if (!defined('AIRTABLE_API_KEY') || !defined('AIRTABLE_BASE_ID') || !defined('AIRTABLE_TABLE_ID')) {
