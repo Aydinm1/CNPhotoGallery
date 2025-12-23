@@ -317,7 +317,7 @@
             showLoadingSkeleton($grid);
             
             // Use PHP endpoint (works on FastComet and most shared hosting)
-            const apiUrl = '/api/airtable.php';
+            const apiUrl = './api/airtable.php';
             
             // Fetch data from our secure proxy
             fetch(apiUrl)
@@ -665,7 +665,7 @@
     <script>
         // Load albums dynamically into dropdown menu
         (function() {
-            const apiUrl = '/api/airtable.php?table=albums';
+            const apiUrl = './api/airtable.php?table=albums';
             fetch(apiUrl)
                 .then(res => {
                     if (!res.ok) {

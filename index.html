@@ -60,7 +60,7 @@
 	<script>
 		// Build fullscreen slider from Airtable via the server proxy.
 		(function(){
-			var apiUrl = '/api/airtable.php';
+			var apiUrl = './api/airtable.php';
 
 			function buildSlidesFromData(data) {
 				var slides = [];
@@ -278,7 +278,7 @@
     <script>
         // Load albums dynamically into dropdown menu
         (function() {
-            const apiUrl = '/api/airtable.php?table=albums';
+            const apiUrl = './api/airtable.php?table=albums';
             fetch(apiUrl)
                 .then(res => {
                     if (!res.ok) {
