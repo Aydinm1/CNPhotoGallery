@@ -19,3 +19,5 @@ Thumbs.db
 # Node modules (if you add dependencies later)
 node_modules/
 
+
+sync_config.jsonc

@@ -830,3 +830,44 @@ html.show-controls .controls_wrapper a.fs_slider_next {
 .socials_list li a.ico_social_codeninjas:hover img {
 	opacity: 0.5;
 }
+
+/* Hide template content in fullscreen_block immediately to prevent flash */
+.fullscreen_block.hided {
+	display: none !important;
+	opacity: 0 !important;
+	visibility: hidden !important;
+}
+
+/* Prevent header/footer from shifting during loading */
+/* Use GPU acceleration to prevent layout shifts */
+.header_scroll .header_wrapper,
+.header_scroll .footer_wrapper {
+	transform: translateZ(0);
+	backface-visibility: hidden;
+	will-change: transform;
+}
+
+/* Ensure logo and social icons maintain position during loading */
+.logo,
+.socials_wrapper,
+.copyright {
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+/* Prevent footer from moving during content load */
+.footer_wrapper {
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+/* Stabilize header scroll container during initialization */
+.header_scroll {
+	overflow: hidden;
+	position: relative;
+}
+
+/* Prevent jScrollPane from causing layout shifts */
+.header_scroll .jspContainer {
+	transform: translateZ(0);
+}

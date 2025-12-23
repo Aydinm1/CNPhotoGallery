@@ -3,7 +3,8 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/png" sizes="32x32" href="img/small-icon.png">
+<link rel="shortcut icon" href="img/small-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="img/apple_icons_57x57.png">
 <link rel="apple-touch-icon" sizes="72x72" href="img/apple_icons_72x72.png">
 <link rel="apple-touch-icon" sizes="114x114" href="img/apple_icons_114x114.png">
@@ -48,7 +49,7 @@
     	</div>
 	</header>
     
-    <div class="fullscreen_block hided">
+    <div class="fullscreen_block hided" style="display: none;">
         <div class="fs_blog_module fw_port_module2 hidden mt7 ml7 sorting_block">
         	<div class="blogpost_preview_fw fw-portPreview element nature pr7 pb7">
             	<div class="fw-portPreview-wrapper featured_items">
@@ -307,14 +308,34 @@
         }
 
         window.addEventListener('DOMContentLoaded', function() {
+            // Lock header scroll position to prevent shifting during load
+            var $headerScroll = jQuery('.header_scroll');
+            var savedScrollTop = null;
+            if ($headerScroll.length && $headerScroll.data('jsp')) {
+                savedScrollTop = $headerScroll.data('jsp').getContentPositionY();
+            }
+            
             var urlParams = new URLSearchParams(window.location.search);
             var albumID = urlParams.get('album');
             console.log('Album ID from URL:', albumID);
             
             // Hide existing template content and show loading skeleton
+            var $fullscreenBlock = jQuery('.fullscreen_block');
             var $grid = jQuery('.fs_blog_module');
+            
+            // Show the fullscreen block and grid immediately (they're hidden by CSS)
+            $fullscreenBlock.css({display: 'block', opacity: '0', visibility: 'visible'});
             $grid.empty();
             showLoadingSkeleton($grid);
+            
+            // Fade in the skeleton
+            setTimeout(function() {
+                $fullscreenBlock.css('opacity', '1');
+                // Restore scroll position if it was saved
+                if (savedScrollTop !== null && $headerScroll.length && $headerScroll.data('jsp')) {
+                    $headerScroll.data('jsp').scrollToY(savedScrollTop, false);
+                }
+            }, 50);
             
             // Use PHP endpoint (works on FastComet and most shared hosting)
             const apiUrl = '/api/airtable.php';
@@ -333,10 +354,12 @@
 
         function buildGallery(data, albumID)
         {
+            var $fullscreenBlock = jQuery('.fullscreen_block');
             var $grid = jQuery('.fs_blog_module');
             $grid.empty();
             
             // Ensure grid is visible
+            $fullscreenBlock.css({display: 'block', opacity: '1', visibility: 'visible'});
             $grid.removeClass('hided hidden').show();
 
             if(!data || !data.records || !Array.isArray(data.records))
@@ -648,6 +671,13 @@
 
             // Initial render
             renderPage(1);
+            
+            // Restore scroll position after content loads
+            if (savedScrollTop !== null && $headerScroll.length && $headerScroll.data('jsp')) {
+                setTimeout(function() {
+                    $headerScroll.data('jsp').scrollToY(savedScrollTop, false);
+                }, 100);
+            }
         }
         
         buildGallery(data, albumID);
@@ -659,7 +689,22 @@
 
         jQuery(document).ready(function ($) {
 			"use strict";
-			jQuery('.custom_bg').remove();            
+			
+			// Lock header scroll position during loading to prevent shifting
+			var $headerScroll = jQuery('.header_scroll');
+			var savedScrollTop = 0;
+			if ($headerScroll.length && $headerScroll.data('jsp')) {
+				savedScrollTop = $headerScroll.data('jsp').getContentPositionY();
+			}
+			
+			jQuery('.custom_bg').remove();
+			
+			// Restore scroll position after a brief delay to prevent shifting
+			setTimeout(function() {
+				if ($headerScroll.length && $headerScroll.data('jsp')) {
+					$headerScroll.data('jsp').scrollToY(savedScrollTop, false);
+				}
+			}, 100);
 		});       				
 	</script>
     <script>
