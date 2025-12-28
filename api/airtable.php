@@ -10,6 +10,10 @@ header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json');
 
+// Suppress error display to prevent HTML output
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -25,7 +29,35 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // Load configuration from a separate file (outside web root if possible)
 // Create a config.php file in the same directory with your credentials
-require_once(__DIR__ . '/../private/config.php');
+$configPath = __DIR__ . '/../private/config.php';
+if (!file_exists($configPath)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Server configuration error: config.php file not found at ' . $configPath]);
+    exit;
+}
+
+// Use output buffering to catch any PHP errors/warnings
+ob_start();
+try {
+    require_once($configPath);
+    $output = ob_get_clean();
+    // If there was any output (like PHP warnings), it's an error
+    if (!empty($output)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server configuration error: PHP error while loading config', 'details' => $output]);
+        exit;
+    }
+} catch (Exception $e) {
+    ob_end_clean();
+    http_response_code(500);
+    echo json_encode(['error' => 'Server configuration error: Exception loading config', 'message' => $e->getMessage()]);
+    exit;
+} catch (Error $e) {
+    ob_end_clean();
+    http_response_code(500);
+    echo json_encode(['error' => 'Server configuration error: Fatal error loading config', 'message' => $e->getMessage()]);
+    exit;
+}
 
 // Validate configuration
 if (!defined('AIRTABLE_API_KEY') || !defined('AIRTABLE_BASE_ID') || !defined('AIRTABLE_TABLE_ID')) {
