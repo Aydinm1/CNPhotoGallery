@@ -20,7 +20,7 @@ jQuery.fn.fs_gallery = function (fs_options) {
     if (fs_options.slides.length > 1) {
         // add a fullscreen toggle button next to play/pause
         fs_body.append('<div class="controls_wrapper">' +
-            '<a href="javascript:void(0)" class="fs_slider_prev"></a>' +
+            '<a href="javascript:void(0)" class="fs_slider_next fs_slider_left"></a>' +
             '<a href="javascript:void(0)" id="fs_play-pause" class="' + playpause + '"></a>' +
             '<a href="javascript:void(0)" class="fs_fullscreen" title="Toggle Fullscreen"></a>' +
             '<a href="javascript:void(0)" class="fs_slider_next"></a>' +
@@ -151,10 +151,10 @@ jQuery.fn.fs_gallery = function (fs_options) {
         jQuery('.fs_slide_thmb').click(function () {
             goToSlide(parseInt(jQuery(this).attr('data-count')));
         });
-        jQuery('.fs_slider_prev').click(function () {
+        jQuery('.fs_slider_left').click(function () {
             prevSlide();
         });
-        jQuery('.fs_slider_next').click(function () {
+        jQuery('.fs_slider_next:not(.fs_slider_left)').click(function () {
             nextSlide();
         });
 

@@ -52,7 +52,7 @@
     
 	<a href="javascript:void(0)" class="control_toggle"></a>
     
-    <div class="custom_bg img_bg def_bg"></div>
+    <div class="custom_bg img_bg def_bg" style="display: none;"></div>
     
     <script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>    
@@ -161,23 +161,72 @@
 				// Expose built slides for debugging
 				window.homeSlides = slides;
 				console.log('homeSlides:', slides);
-				// Fallback: if no slides found, leave default static set (do nothing)
+				// Only initialize gallery if we have slides from Airtable
 				if (!slides || slides.length === 0) {
-					console.warn('No featured slides found in Airtable. Slider will use static set.');
+					console.warn('No featured slides found in Airtable. Gallery will not be initialized.');
+					return; // Don't initialize gallery if no slides
 				}
 
 				jQuery(document).ready(function(){
 					"use strict";
 					jQuery('html').addClass('hasPag');
 					jQuery('.custom_bg').remove();
+					
+					// Initialize gallery with slides from Airtable
 					jQuery('body').fs_gallery({
 						fx: 'fade', /*fade, zoom, slide_left, slide_right, slide_top, slide_bottom*/
 						fit: 'no_fit',
 						slide_time: 3300, /*This time must be < then time in css*/
 						autoplay: 1,
 						show_controls: 1,
-						slides: (slides && slides.length > 0 ? slides : window.gallery_set || [])
+						slides: slides
 					});
+					
+					// Show gallery container once it's ready
+					setTimeout(function() {
+						var $galleryContainer = jQuery('.fs_gallery_container');
+						if ($galleryContainer.length && $galleryContainer.find('li').length > 0) {
+							$galleryContainer.addClass('gallery-ready');
+						}
+						// Ensure fullscreen button is clickable and working
+						function ensureFullscreenButton() {
+							var $fullscreenBtn = jQuery('.fs_fullscreen');
+							if ($fullscreenBtn.length && !$fullscreenBtn.data('handler-attached')) {
+								$fullscreenBtn.off('click').on('click', function(e) {
+									e.preventDefault();
+									e.stopPropagation();
+									var el = document.querySelector('.fs_gallery_wrapper');
+									if (!el) return;
+									var isFull = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+									if (!isFull) {
+										if (el.requestFullscreen) el.requestFullscreen();
+										else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+										else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+										else if (el.msRequestFullscreen) el.msRequestFullscreen();
+										jQuery('html').addClass('is-fullscreen');
+									} else {
+										if (document.exitFullscreen) document.exitFullscreen();
+										else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+										else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+										else if (document.msExitFullscreen) document.msExitFullscreen();
+										jQuery('html').removeClass('is-fullscreen');
+									}
+									return false;
+								});
+								$fullscreenBtn.data('handler-attached', true);
+							}
+						}
+						
+						// Fix immediately
+						ensureFullscreenButton();
+						// Also fix after a short delay to catch any late DOM changes
+						setTimeout(function() {
+							ensureFullscreenButton();
+						}, 100);
+						setTimeout(function() {
+							ensureFullscreenButton();
+						}, 500);
+					}, 200);
 
 					jQuery('.fs_share').click(function(){
 						jQuery('.fs_fadder').removeClass('hided');
@@ -220,18 +269,9 @@
 				});
 			}).catch(function(err){
 				console.error('Failed to load Airtable slides:', err);
-				// initialize with fallback static set if available
+				// Don't initialize gallery if Airtable fetch fails - just remove custom_bg
 				jQuery(document).ready(function(){
-					jQuery('html').addClass('hasPag');
 					jQuery('.custom_bg').remove();
-					jQuery('body').fs_gallery({
-						fx: 'fade',
-						fit: 'no_fit',
-						slide_time: 3300,
-						autoplay: 1,
-						show_controls: 1,
-						slides: window.gallery_set || []
-					});
 				});
 			});
 		})();

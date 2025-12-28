@@ -540,13 +540,39 @@ h6, h6 span, h6 a,
 	opacity: 1;
 }
 
-.skeleton-box {
+/* Ensure skeleton box containers are properly sized */
+.skeleton-loader .fw-portPreview-wrapper,
+.skeleton-loader .img_block,
+.skeleton-loader .img_block.wrapped_img {
 	width: 100%;
 	height: 100%;
+	position: relative;
+}
+
+.skeleton-loader .img_block {
+	aspect-ratio: 1 / 1;
+	overflow: hidden;
+}
+
+.skeleton-box {
+	display: block;
+	width: 100%;
+	height: 100%;
+	min-height: 100%;
 	aspect-ratio: 1 / 1;
 	background: #e0e0e0;
 	border-radius: 2px;
 	animation: skeleton-loading 1.5s ease-in-out infinite;
+	position: relative;
+}
+
+/* Ensure skeleton box fills its container */
+.fw-port_module2 .skeleton-loader .img_block .skeleton-box {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 }
 
 @keyframes skeleton-loading {
@@ -653,30 +679,67 @@ h6, h6 span, h6 a,
 
 /* Fullscreen control (in the slider controls) */
 .controls_wrapper { display:flex; align-items:center; gap:8px; }
-.controls_wrapper .fs_fullscreen { width:40px; height:40px; border-radius:50%; background:rgba(0,0,0,0.6); color:#fff; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; opacity:0; visibility:hidden; transform:scale(0.95); transition:opacity .18s ease, transform .18s ease; }
-.controls_wrapper .fs_fullscreen:before { content: '⛶'; }
-
-/* Position fullscreen button at the bottom-right corner */
-.controls_wrapper .fs_fullscreen {
-	position: fixed;
-	right: 18px;
-	bottom: 18px;
-	z-index: 1000;
+.controls_wrapper .fs_fullscreen { 
+	width:56px !important; 
+	height:56px !important; 
+	border-radius:50% !important; 
+	background:rgba(0,0,0,0.6) !important; 
+	backdrop-filter: blur(10px) !important;
+	-webkit-backdrop-filter: blur(10px) !important;
+	color:#fff !important; 
+	display:inline-flex !important; 
+	align-items:center !important; 
+	justify-content:center !important; 
+	cursor:pointer !important; 
+	font-size:20px !important; 
+	opacity:0 !important; 
+	visibility:hidden !important; 
+	transform:scale(1) !important; 
+	transition:opacity .3s ease, transform .3s cubic-bezier(0.4, 0, 0.2, 1), background .3s ease, box-shadow .3s ease !important; 
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	position: fixed !important;
+	right: 30px !important;
+	bottom: 30px !important;
+	z-index: 2147483661 !important;
+	pointer-events: auto !important;
 }
+.controls_wrapper .fs_fullscreen:before { 
+	content: '⛶' !important;
+	position: absolute !important;
+	left: 50% !important;
+	top: 50% !important;
+	transform: translate(-50%, -50%) !important;
+	font-size: 20px !important;
+}
+.controls_wrapper .fs_fullscreen:hover { 
+	background:rgba(0,0,0,0.75) !important; 
+	transform:scale(1.1) !important; 
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+.controls_wrapper .fs_fullscreen:active { 
+	transform:scale(0.95) !important; 
+}
+
+/* Position fullscreen button at the bottom-right corner - styles consolidated above */
 
 /* Show fullscreen button when hovering the gallery on devices that support hover */
 @media (hover: hover) {
 	/* controls_wrapper is appended as a sibling of fs_gallery_wrapper, so use sibling selectors */
 	.fs_gallery_wrapper:hover ~ .controls_wrapper .fs_fullscreen,
 	.fs_gallery_wrapper:hover + .controls_wrapper .fs_fullscreen,
-	.controls_wrapper:hover .fs_fullscreen {
-		opacity:1; visibility:visible; transform:scale(1);
+	.controls_wrapper:hover .fs_fullscreen,
+	html.show-controls .controls_wrapper .fs_fullscreen {
+		opacity:1 !important; 
+		visibility:visible !important; 
+		transform:scale(1) !important;
+		pointer-events: auto !important;
 	}
 }
 
 /* On touch devices (no hover), keep the fullscreen button hidden (only visible on hover) */
 @media (hover: none) {
-    .controls_wrapper .fs_fullscreen { opacity:0; visibility:hidden; }
+    .controls_wrapper .fs_fullscreen { opacity:0 !important; visibility:hidden !important; }
 }
 
 /* When the gallery is in native fullscreen, ensure it fills the screen and controls are visible */
@@ -686,6 +749,19 @@ html.is-fullscreen .controls_wrapper { z-index:2147483650; }
 /* Remove default gallery padding so media reaches the viewport edges */
 .fs_wrapper_global, .fs_gallery_container {
 	padding: 0 !important;
+}
+
+/* Hide gallery container initially until slides are loaded to prevent flash */
+.fs_gallery_container {
+	opacity: 0 !important;
+	visibility: hidden !important;
+	transition: opacity 0.5s ease, visibility 0.5s ease !important;
+}
+
+/* Show gallery container when it's ready (class added by JavaScript) */
+.fs_gallery_container.gallery-ready {
+	opacity: 1 !important;
+	visibility: visible !important;
 }
 
 /* Make slide backgrounds cover the container (avoid visible background gutters) */
@@ -700,6 +776,7 @@ html.show-controls .controls_wrapper .fs_fullscreen {
 	opacity: 1 !important;
 	visibility: visible !important;
 	transform: scale(1) !important;
+	pointer-events: auto !important;
 }
 
 /* Ensure video/iframe take the full slide area */
@@ -712,92 +789,203 @@ html.show-controls .controls_wrapper .fs_fullscreen {
 	height: 100% !important;
 }
 
-/* Make slider arrows and play/pause glyphs white and centered */
+/* Make slider arrows and play/pause glyphs white and centered with modern styling */
 /* Force white glyphs for slider arrows and play/pause (high specificity + !important) */
 .controls_wrapper a.fs_slider_prev,
 .controls_wrapper a.fs_slider_next,
 .controls_wrapper a#fs_play-pause {
 	background-image: none !important;
-	background: transparent !important;
+	background: rgba(0, 0, 0, 0.6) !important;
+	backdrop-filter: blur(10px) !important;
+	-webkit-backdrop-filter: blur(10px) !important;
 	color: #fff !important;
+	border-radius: 50% !important;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	overflow: hidden !important;
 }
+
+.controls_wrapper a.fs_slider_prev:hover,
+.controls_wrapper a.fs_slider_next:hover,
+.controls_wrapper a#fs_play-pause:hover {
+	background: rgba(0, 0, 0, 0.75) !important;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+	transform: scale(1.1) !important;
+}
+
+.controls_wrapper a.fs_slider_prev:active,
+.controls_wrapper a.fs_slider_next:active,
+.controls_wrapper a#fs_play-pause:active {
+	transform: scale(0.95) !important;
+}
+
 .controls_wrapper a.fs_slider_prev:before,
 .controls_wrapper a.fs_slider_next:before,
 .controls_wrapper a#fs_play-pause:before {
 	content: '' !important;
 	position: absolute !important;
-	left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important;
-	display: flex !important;
-	align-items: center !important; justify-content: center !important;
+	left: 50% !important;
+	top: 50% !important;
+	transform: translate(-50%, -50%) !important;
+	display: block !important;
 	color: #fff !important;
-	font-size: 34px !important;
-	text-shadow: 0 1px 2px rgba(0,0,0,0.6) !important;
+	font-size: 24px !important;
+	line-height: 1 !important;
+	text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+	font-weight: 400 !important;
+	width: auto !important;
+	height: auto !important;
 }
-.controls_wrapper a.fs_slider_prev:before { content: '\25C0' !important; } /* ◀ */
-.controls_wrapper a.fs_slider_next:before { content: '\25B6' !important; } /* ▶ */
-.controls_wrapper a#fs_play-pause:before { font-size: 34px !important; }
-.controls_wrapper a#fs_play-pause.fs_play:before { content: '\25B6' !important; } /* ▶ (play) */
-.controls_wrapper a#fs_play-pause.fs_pause:before { content: '\23F8' !important; } /* ⏸ (pause) */
+
+.controls_wrapper a.fs_slider_next.fs_slider_left:before { content: '\25C0' !important; } /* ◀ (left arrow, reversed direction) */
+.controls_wrapper a.fs_slider_next:not(.fs_slider_left):before { content: '\25B6' !important; } /* ▶ */
+
+/* Play/pause button - both states use same size and perfect centering */
+.controls_wrapper a#fs_play-pause:before {
+	font-size: 28px !important;
+	transform: translate(-50%, -50%) !important;
+}
+.controls_wrapper a#fs_play-pause.fs_play:before { 
+	content: '\25B6' !important; /* ▶ (play) - adjusted for visual centering */
+	transform: translate(-48%, -48%) !important; /* Slight adjustment to center the triangle icon */
+	left: 50% !important;
+	top: 50% !important;
+}
+.controls_wrapper a#fs_play-pause.fs_pause:before { 
+	content: '\23F8' !important; /* ⏸ (pause) - perfectly centered */
+	transform: translate(-50%, -50%) !important;
+	left: 50% !important;
+	top: 50% !important;
+}
 
 /* Ensure arrows are visible (override opacity rules when shown) */
-.controls_wrapper a.fs_slider_prev:before,
 .controls_wrapper a.fs_slider_next:before,
 .controls_wrapper a#fs_play-pause:before { opacity: 1 !important; visibility: visible !important; }
 
 /* Remove any sprite/background behind the arrow glyphs (theme uses image sprites) */
-.controls_wrapper a.fs_slider_prev:before,
 .controls_wrapper a.fs_slider_next:before,
-.controls_wrapper a.fs_slider_prev,
 .controls_wrapper a.fs_slider_next {
-	background: transparent !important;
 	background-image: none !important;
 }
 
 /* Controls default hidden; show on hover or when html has 'show-controls' (mouse movement)
    This applies both in fullscreen and normal page view when the gallery exists. */
 .controls_wrapper a#fs_play-pause,
-.controls_wrapper a.fs_slider_prev,
 .controls_wrapper a.fs_slider_next {
-	opacity: 0; transition: opacity 200ms ease; pointer-events: none;
+	opacity: 0 !important; 
+	transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, box-shadow 0.3s ease !important; 
+	pointer-events: none !important;
 }
 
-/* Make the play/pause button bigger and easier to tap/click */
+/* Position left arrow (duplicated right arrow) to the right of the sidebar */
+html body .controls_wrapper a.fs_slider_next.fs_slider_left,
+body .controls_wrapper a.fs_slider_next.fs_slider_left,
+.controls_wrapper a.fs_slider_next.fs_slider_left,
+a.fs_slider_next.fs_slider_left {
+	left: 290px !important; /* 240px sidebar width + 50px spacing */
+	right: auto !important;
+}
+
+/* Make the play/pause button bigger and easier to tap/click - centered between left and right arrows */
 .controls_wrapper a#fs_play-pause {
-	width: 64px !important;
-	height: 64px !important;
-	border-radius: 0 !important;
-	background: transparent !important;
+	width: 72px !important;
+	height: 72px !important;
 	display: inline-flex !important;
 	align-items: center !important;
 	justify-content: center !important;
 	position: fixed !important;
 	top: calc(50% + 8px) !important;
-	left: 50% !important;
+	left: calc(120px + 50vw) !important; /* Center between left arrow center (318px) and right arrow center (100vw - 78px) = (240px + 100vw) / 2 */
 	transform: translate(-50%, -50%) scale(1) !important;
 	cursor: pointer !important;
 	box-sizing: border-box !important;
 	z-index: 2147483660 !important;
+	margin: 0 !important;
 }
 
-/* Slightly enlarge the glyph and add a subtle scale on hover (preserve centering) */
-.controls_wrapper a#fs_play-pause:before { font-size: 36px !important; }
-.controls_wrapper a#fs_play-pause:hover { transform: translate(-50%, -50%) scale(1.06) !important; }
+/* Arrow buttons styling - consolidated to ensure consistency */
+html body .controls_wrapper a.fs_slider_next,
+body .controls_wrapper a.fs_slider_next,
+.controls_wrapper a.fs_slider_next,
+a.fs_slider_next {
+	width: 56px !important;
+	height: 56px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	position: fixed !important;
+	top: calc(50% + 8px) !important;
+	transform: translateY(-50%) scale(1) !important;
+	cursor: pointer !important;
+	box-sizing: border-box !important;
+	z-index: 2147483659 !important;
+	margin: 0 !important;
+}
+
+/* Right arrow (next) positioning */
+html body .controls_wrapper a.fs_slider_next:not(.fs_slider_left),
+body .controls_wrapper a.fs_slider_next:not(.fs_slider_left),
+.controls_wrapper a.fs_slider_next:not(.fs_slider_left),
+a.fs_slider_next:not(.fs_slider_left) {
+	right: 50px !important;
+	left: auto !important;
+}
+
+/* Hover effects for arrows (preserve positioning) */
+.controls_wrapper a.fs_slider_next.fs_slider_left:hover {
+	transform: translateY(-50%) scale(1.1) translateX(-5px) !important;
+}
+
+.controls_wrapper a.fs_slider_next:not(.fs_slider_left):hover {
+	transform: translateY(-50%) scale(1.1) translateX(5px) !important;
+}
+
+/* Play/pause button hover effect (preserve centering) */
+.controls_wrapper a#fs_play-pause:hover { transform: translate(-50%, -50%) scale(1.1) !important; }
 
 .fs_gallery_wrapper:hover ~ .controls_wrapper a#fs_play-pause,
-.fs_gallery_wrapper:hover ~ .controls_wrapper a.fs_slider_prev,
 .fs_gallery_wrapper:hover ~ .controls_wrapper a.fs_slider_next,
 .controls_wrapper:hover a#fs_play-pause,
-.controls_wrapper:hover a.fs_slider_prev,
 .controls_wrapper:hover a.fs_slider_next,
 html.show-controls .controls_wrapper a#fs_play-pause,
-html.show-controls .controls_wrapper a.fs_slider_prev,
 html.show-controls .controls_wrapper a.fs_slider_next {
-	opacity: 0.99 !important; pointer-events: auto !important;
+	opacity: 1 !important; 
+	pointer-events: auto !important;
+	visibility: visible !important;
+	display: inline-flex !important;
 }
 
-/* Also make sure the arrows are positioned when visible */
-.fs_slider_prev { left: 60px; }
-.fs_slider_next { right: 60px; }
+/* Ensure arrows maintain correct position when visible */
+.fs_gallery_wrapper:hover ~ .controls_wrapper a.fs_slider_next.fs_slider_left,
+.controls_wrapper:hover a.fs_slider_next.fs_slider_left,
+html.show-controls .controls_wrapper a.fs_slider_next.fs_slider_left,
+body .controls_wrapper a.fs_slider_next.fs_slider_left {
+	left: 290px !important;
+	right: auto !important;
+}
+
+.fs_gallery_wrapper:hover ~ .controls_wrapper a.fs_slider_next:not(.fs_slider_left),
+.controls_wrapper:hover a.fs_slider_next:not(.fs_slider_left),
+html.show-controls .controls_wrapper a.fs_slider_next:not(.fs_slider_left),
+body .controls_wrapper a.fs_slider_next:not(.fs_slider_left) {
+	right: 50px !important;
+	left: auto !important;
+}
+
+/* Hide thumbnail carousel completely */
+.fs_thmb_viewport {
+	display: none !important;
+	visibility: hidden !important;
+	opacity: 0 !important;
+}
+
+/* Hide hamburger icon (control toggle) */
+.control_toggle {
+	display: none !important;
+	visibility: hidden !important;
+	opacity: 0 !important;
+}
 
 /* Hide the big gallery title (e.g. "PICTURE 26") */
 .fs_title { display: none !important; }
@@ -836,6 +1024,12 @@ html.show-controls .controls_wrapper a.fs_slider_next {
 	display: none !important;
 	opacity: 0 !important;
 	visibility: hidden !important;
+}
+
+/* Prevent theme.js from animating skeleton-managed fullscreen_block */
+.fullscreen_block[data-skeleton-managed="true"] {
+	transition: none !important;
+	animation: none !important;
 }
 
 /* Prevent header/footer from shifting during loading */
