@@ -120,7 +120,7 @@
             var $grid = jQuery('.fs_blog_module');
             
             // Show the fullscreen block and grid immediately (they're hidden by CSS)
-            $fullscreenBlock.css({display: 'block', opacity: '0', visibility: 'visible'});
+            $fullscreenBlock.removeClass('hided').css({display: 'block', opacity: '0', visibility: 'visible'});
             $grid.empty();
             showLoadingSkeleton($grid);
             
@@ -184,6 +184,9 @@
             console.error('no records found in data');
             return;
         }
+        
+        // Ensure the fullscreen block is visible
+        $fullscreenBlock.removeClass('hided').css({display: 'block', opacity: '1', visibility: 'visible'});
 
         for(var i=0; i<data.records.length; i++)
     {

@@ -54,6 +54,11 @@
     
     <div class="custom_bg img_bg def_bg" style="display: none;"></div>
     
+    <!-- Loading skeleton for gallery - positioned in content area only -->
+    <div class="gallery-skeleton-loader" id="gallery-skeleton">
+        <div class="gallery-skeleton-box"></div>
+    </div>
+    
     <script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>    
     <script type="text/javascript" src="js/modules.js"></script>
@@ -152,6 +157,14 @@
 				return slides;
 			}
 
+			// Show loading skeleton immediately
+			jQuery(document).ready(function() {
+				var $skeleton = jQuery('#gallery-skeleton');
+				if ($skeleton.length) {
+					$skeleton.css({display: 'block', opacity: '1'});
+				}
+			});
+			
 			// Fetch Airtable and initialize slider
 			fetch(apiUrl).then(function(res){
 				if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -164,6 +177,8 @@
 				// Only initialize gallery if we have slides from Airtable
 				if (!slides || slides.length === 0) {
 					console.warn('No featured slides found in Airtable. Gallery will not be initialized.');
+					// Hide skeleton if no slides
+					jQuery('#gallery-skeleton').fadeOut(300);
 					return; // Don't initialize gallery if no slides
 				}
 
@@ -182,11 +197,13 @@
 						slides: slides
 					});
 					
-					// Show gallery container once it's ready
+					// Show gallery container once it's ready and hide skeleton
 					setTimeout(function() {
 						var $galleryContainer = jQuery('.fs_gallery_container');
 						if ($galleryContainer.length && $galleryContainer.find('li').length > 0) {
 							$galleryContainer.addClass('gallery-ready');
+							// Hide skeleton once gallery is ready
+							jQuery('#gallery-skeleton').fadeOut(300);
 						}
 						// Ensure fullscreen button is clickable and working
 						function ensureFullscreenButton() {
@@ -269,9 +286,10 @@
 				});
 			}).catch(function(err){
 				console.error('Failed to load Airtable slides:', err);
-				// Don't initialize gallery if Airtable fetch fails - just remove custom_bg
+				// Don't initialize gallery if Airtable fetch fails - hide skeleton and remove custom_bg
 				jQuery(document).ready(function(){
 					jQuery('.custom_bg').remove();
+					jQuery('#gallery-skeleton').fadeOut(300);
 				});
 			});
 		})();
